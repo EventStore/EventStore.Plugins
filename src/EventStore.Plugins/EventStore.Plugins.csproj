@@ -17,4 +17,7 @@
 		<Copyright>Copyright 2012-2020 Event Store Ltd</Copyright>
 		<PackageTags>eventstore plugins</PackageTags>
 	</PropertyGroup>
+	<ItemGroup>
+	  <PackageReference Include="Serilog" Version="2.9.0" />
+	</ItemGroup>
 </Project>
