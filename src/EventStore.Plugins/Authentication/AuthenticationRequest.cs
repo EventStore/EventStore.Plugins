@@ -3,15 +3,17 @@
 namespace EventStore.Plugins.Authentication {
 	public abstract class AuthenticationRequest {
 		/// <summary>
-		/// The Identifier for the source that this request came from
+		///     The Identifier for the source that this request came from
 		/// </summary>
 		public readonly string Id;
+
 		/// <summary>
-		/// The name of the principal for the request
+		///     The name of the principal for the request
 		/// </summary>
 		public readonly string Name;
+
 		/// <summary>
-		/// The supplied password for the request
+		///     The supplied password for the request
 		/// </summary>
 		public readonly string SuppliedPassword;
 
@@ -22,20 +24,23 @@ namespace EventStore.Plugins.Authentication {
 		}
 
 		/// <summary>
-		///	The request is unauthorized
+		///     The request is unauthorized
 		/// </summary>
 		public abstract void Unauthorized();
+
 		/// <summary>
-		/// The request was successfully authenticated
+		///     The request was successfully authenticated
 		/// </summary>
-		/// <param name="principal">The <see cref="ClaimsPrincipal"/> of the authenticated request</param>
+		/// <param name="principal">The <see cref="ClaimsPrincipal" /> of the authenticated request</param>
 		public abstract void Authenticated(ClaimsPrincipal principal);
+
 		/// <summary>
-		/// An error occurred during authentication
+		///     An error occurred during authentication
 		/// </summary>
 		public abstract void Error();
+
 		/// <summary>
-		/// The authentication provider is not yet ready to service the request
+		///     The authentication provider is not yet ready to service the request
 		/// </summary>
 		public abstract void NotReady();
 	}

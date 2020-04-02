@@ -6,7 +6,7 @@ namespace EventStore.Plugins.Authorization {
 		string CommandLineName { get; }
 
 		/// <summary>
-		/// Creates an authorization provider factory for the authorization plugin
+		///     Creates an authorization provider factory for the authorization plugin
 		/// </summary>
 		/// <param name="authorizationConfigPath">The path to the configuration file for the authorization plugin</param>
 		IAuthorizationProviderFactory GetAuthorizationProviderFactory(string authorizationConfigPath);
