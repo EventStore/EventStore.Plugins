@@ -10,12 +10,18 @@ namespace EventStore.Plugins
 {
     public static class ConfigParser
     {
-        public static T ReadConfiguration<T>(string fileName, string sectionName) where T : class
+        /// <summary>
+        /// Deserializes a section of configuration from a given config file into the provided settings type
+        /// </summary>
+        /// <param name="configPath">The path to the configuration file</param>
+        /// <param name="sectionName">The section to deserialize</param>
+        /// <typeparam name="T">The type of settings object to create from the configuration</typeparam>
+        public static T ReadConfiguration<T>(string configPath, string sectionName) where T : class
         {
             try
             {
                 var yamlStream = new YamlStream();
-                var stringReader = new StringReader(File.ReadAllText(fileName));
+                var stringReader = new StringReader(File.ReadAllText(configPath));
                 try {
                     yamlStream.Load(stringReader);
                 } catch (Exception ex) {
@@ -51,7 +57,7 @@ namespace EventStore.Plugins
             }
             catch (FileNotFoundException ex)
             {
-                Log.Error(ex, "Cannot find the specified config file {0}.", fileName);
+                Log.Error(ex, "Cannot find the specified config file {0}.", configPath);
                 throw;
             }
         }
