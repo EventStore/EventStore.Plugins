@@ -19,5 +19,6 @@
 	</PropertyGroup>
 	<ItemGroup>
 	  <PackageReference Include="Serilog" Version="2.9.0" />
+	  <PackageReference Include="YamlDotNet" Version="5.2.1" />
 	</ItemGroup>
 </Project>
