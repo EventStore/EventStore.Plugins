@@ -14,6 +14,8 @@
 			public static readonly OperationDefinition SetPriority = new OperationDefinition(Resource, "setPriority");
 			public static readonly OperationDefinition Resign = new OperationDefinition(Resource, "resign");
 
+			public static readonly OperationDefinition Login = new Operation(Resource, "login");
+
 			public static class Scavenge {
 				private const string Resource = Node.Resource + "/scavenge";
 				public static readonly OperationDefinition Start = new OperationDefinition(Resource, "start");
