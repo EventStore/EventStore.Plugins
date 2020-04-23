@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project Sdk="Microsoft.NET.Sdk">
-    <PropertyGroup>
+	<PropertyGroup>
 		<TargetFramework>netcoreapp3.1</TargetFramework>
 		<GenerateAssemblyInfo>true</GenerateAssemblyInfo>
 		<Platforms>x64</Platforms>
 		<Nullable>disable</Nullable>
 		<NullableContextOptions>enable</NullableContextOptions>
 		<TreatWarningsAsErrors>true</TreatWarningsAsErrors>
-    </PropertyGroup>
+	</PropertyGroup>
 	<PropertyGroup>
 		<PackageId>EventStore.Plugins</PackageId>
 		<Authors>Event Store Ltd</Authors>
@@ -21,11 +21,14 @@
 		<PackageTags>eventstore plugins</PackageTags>
 	</PropertyGroup>
 	<ItemGroup>
-	  <PackageReference Include="Serilog" Version="2.9.0" />
-	  <PackageReference Include="YamlDotNet" Version="5.2.1" />
+		<FrameworkReference Include="Microsoft.AspNetCore.App" />
 	</ItemGroup>
 	<ItemGroup>
-		<None Include="..\..\LICENSE.md" Pack="true" PackagePath="\"/>
-		<None Include="..\..\ouro.svg" Pack="true" PackagePath="\"/>
+		<PackageReference Include="Serilog" Version="2.9.0" />
+		<PackageReference Include="YamlDotNet" Version="5.2.1" />
+	</ItemGroup>
+	<ItemGroup>
+		<None Include="..\..\LICENSE.md" Pack="true" PackagePath="\" />
+		<None Include="..\..\ouro.svg" Pack="true" PackagePath="\" />
 	</ItemGroup>
 </Project>
