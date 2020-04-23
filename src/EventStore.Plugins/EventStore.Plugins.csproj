@@ -1,19 +1,19 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project Sdk="Microsoft.NET.Sdk">
     <PropertyGroup>
-			<TargetFramework>netcoreapp3.1</TargetFramework>
-			<GenerateAssemblyInfo>true</GenerateAssemblyInfo>
-			<Platforms>x64</Platforms>
-			<Nullable>disable</Nullable>
-			<NullableContextOptions>enable</NullableContextOptions>
-			<TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+		<TargetFramework>netcoreapp3.1</TargetFramework>
+		<GenerateAssemblyInfo>true</GenerateAssemblyInfo>
+		<Platforms>x64</Platforms>
+		<Nullable>disable</Nullable>
+		<NullableContextOptions>enable</NullableContextOptions>
+		<TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     </PropertyGroup>
 	<PropertyGroup>
 		<PackageId>EventStore.Plugins</PackageId>
 		<Authors>Event Store Ltd</Authors>
-		<PackageLicenseUrl>https://github.com/EventStore/EventStore.Plugins/blob/master/LICENSE.md</PackageLicenseUrl>
+		<PackageLicenseFile>LICENSE.md</PackageLicenseFile>
 		<PackageProjectUrl>https://eventstore.com</PackageProjectUrl>
-		<PackageIconUrl>https://eventstore.com/images/ouro.svg</PackageIconUrl>
+		<PackageIcon>ouro.svg</PackageIcon>
 		<PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
 		<Description>The interfaces required to create plugins for Event Store. Get the open source or commercial versions of Event Store server from https://eventstore.com/</Description>
 		<PackageReleaseNotes>https://eventstore.com/blog/release-notes/</PackageReleaseNotes>
@@ -23,5 +23,9 @@
 	<ItemGroup>
 	  <PackageReference Include="Serilog" Version="2.9.0" />
 	  <PackageReference Include="YamlDotNet" Version="5.2.1" />
+	</ItemGroup>
+	<ItemGroup>
+		<None Include="..\..\LICENSE.md" Pack="true" PackagePath="\"/>
+		<None Include="..\..\ouro.svg" Pack="true" PackagePath="\"/>
 	</ItemGroup>
 </Project>
