@@ -13,7 +13,7 @@
 		<Authors>Event Store Ltd</Authors>
 		<PackageLicenseFile>LICENSE.md</PackageLicenseFile>
 		<PackageProjectUrl>https://eventstore.com</PackageProjectUrl>
-		<PackageIcon>ouro.svg</PackageIcon>
+		<PackageIcon>ouro.png</PackageIcon>
 		<PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
 		<Description>The interfaces required to create plugins for Event Store. Get the open source or commercial versions of Event Store server from https://eventstore.com/</Description>
 		<PackageReleaseNotes>https://eventstore.com/blog/release-notes/</PackageReleaseNotes>
@@ -26,6 +26,6 @@
 	</ItemGroup>
 	<ItemGroup>
 		<None Include="..\..\LICENSE.md" Pack="true" PackagePath="\" />
-		<None Include="..\..\ouro.svg" Pack="true" PackagePath="\" />
+		<None Include="..\..\ouro.png" Pack="true" PackagePath="\" />
 	</ItemGroup>
 </Project>
