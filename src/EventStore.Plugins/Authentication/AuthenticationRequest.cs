@@ -1,7 +1,11 @@
-﻿using System.Security.Claims;
+﻿using System;
+using System.Collections.Generic;
+using System.Security.Claims;
 
 namespace EventStore.Plugins.Authentication {
 	public abstract class AuthenticationRequest {
+		private readonly IReadOnlyDictionary<string, string> _tokens;
+
 		/// <summary>
 		///     The Identifier for the source that this request came from
 		/// </summary>
@@ -17,11 +21,28 @@ namespace EventStore.Plugins.Authentication {
 		/// </summary>
 		public readonly string SuppliedPassword;
 
-		protected AuthenticationRequest(string id, string name, string suppliedPassword) {
+		protected AuthenticationRequest(string id, IReadOnlyDictionary<string, string> tokens) {
+			if (id == null) throw new ArgumentNullException(nameof(id));
+			if (tokens == null) throw new ArgumentNullException(nameof(tokens));
 			Id = id;
-			Name = name;
-			SuppliedPassword = suppliedPassword;
+			_tokens = tokens;
 		}
+
+		protected AuthenticationRequest(string id, string name, string suppliedPassword)
+			: this(id, new Dictionary<string, string> {
+				["uid"] = name,
+				["pwd"] = suppliedPassword
+			}) {
+			Name = GetToken("uid");
+			SuppliedPassword = GetToken("pwd");
+		}
+
+		/// <summary>
+		/// Gets the token corresponding to <param name="key" />.
+		/// </summary>
+		/// <param name="key"></param>
+		/// <returns></returns>
+		public string GetToken(string key) => _tokens.TryGetValue(key, out var token) ? token : null;
 
 		/// <summary>
 		///     The request is unauthorized
