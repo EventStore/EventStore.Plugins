@@ -26,6 +26,8 @@ namespace EventStore.Plugins.Authentication {
 			if (tokens == null) throw new ArgumentNullException(nameof(tokens));
 			Id = id;
 			_tokens = tokens;
+			Name = GetToken("uid");
+			SuppliedPassword = GetToken("pwd");
 		}
 
 		protected AuthenticationRequest(string id, string name, string suppliedPassword)
@@ -33,8 +35,6 @@ namespace EventStore.Plugins.Authentication {
 				["uid"] = name,
 				["pwd"] = suppliedPassword
 			}) {
-			Name = GetToken("uid");
-			SuppliedPassword = GetToken("pwd");
 		}
 
 		/// <summary>
