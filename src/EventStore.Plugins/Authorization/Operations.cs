@@ -74,6 +74,7 @@
 				private const string Resource = Node.Resource + "/gossip";
 				public static readonly OperationDefinition Read = new OperationDefinition(Resource, "read");
 				public static readonly OperationDefinition Update = new OperationDefinition(Resource, "update");
+				public static readonly OperationDefinition ClientRead = new OperationDefinition(Resource + "/client", "read");
 			}
 		}
 
