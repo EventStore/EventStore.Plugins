@@ -10,6 +10,7 @@
 				new OperationDefinition(Resource + "/content", "read");
 
 			public static readonly OperationDefinition Shutdown = new OperationDefinition(Resource, "shutdown");
+			public static readonly OperationDefinition ReloadConfiguration = new OperationDefinition(Resource, "reloadConfiguration");
 			public static readonly OperationDefinition MergeIndexes = new OperationDefinition(Resource, "mergeIndexes");
 			public static readonly OperationDefinition SetPriority = new OperationDefinition(Resource, "setPriority");
 			public static readonly OperationDefinition Resign = new OperationDefinition(Resource, "resign");
