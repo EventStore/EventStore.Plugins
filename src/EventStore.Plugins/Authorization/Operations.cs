@@ -104,6 +104,7 @@
 			public static readonly OperationDefinition Update = new OperationDefinition(Resource, "update");
 			public static readonly OperationDefinition Delete = new OperationDefinition(Resource, "delete");
 			public static readonly OperationDefinition ReplayParked = new OperationDefinition(Resource, "replay");
+			public static readonly OperationDefinition Restart = new OperationDefinition(Resource, "restart");
 
 			public static readonly OperationDefinition ProcessMessages = new OperationDefinition(Resource, "process");
 
