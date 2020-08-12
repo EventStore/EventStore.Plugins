@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Routing;
 
 namespace EventStore.Plugins.Authentication {
 	public interface IAuthenticationProvider {
@@ -24,5 +25,11 @@ namespace EventStore.Plugins.Authentication {
 		///     Get public properties which may be required for the authentication flow.
 		/// </summary>
 		IEnumerable<KeyValuePair<string,string>> GetPublicProperties();
+
+		/// <summary>
+		///     Create any required endpoints.
+		/// </summary>
+		/// <param name="endpointRouteBuilder"></param>
+		void ConfigureEndpoints(IEndpointRouteBuilder endpointRouteBuilder);
 	}
 }

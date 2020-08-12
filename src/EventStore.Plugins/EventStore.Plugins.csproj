@@ -25,6 +25,9 @@
 	  <PackageReference Include="YamlDotNet" Version="5.2.1" />
 	</ItemGroup>
 	<ItemGroup>
+		<FrameworkReference Include="Microsoft.AspNetCore.App" />
+	</ItemGroup>
+	<ItemGroup>
 		<None Include="..\..\LICENSE.md" Pack="true" PackagePath="\" />
 		<None Include="..\..\ouro.png" Pack="true" PackagePath="\" />
 	</ItemGroup>
