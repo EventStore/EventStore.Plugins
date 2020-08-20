@@ -31,5 +31,10 @@ namespace EventStore.Plugins.Authentication {
 		/// </summary>
 		/// <param name="endpointRouteBuilder"></param>
 		void ConfigureEndpoints(IEndpointRouteBuilder endpointRouteBuilder);
+
+		/// <summary>
+		///     Get supported authentication schemes.
+		/// </summary>
+		IReadOnlyList<string> GetSupportedAuthenticationSchemes();
 	}
 }
