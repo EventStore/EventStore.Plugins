@@ -1,4 +1,6 @@
-﻿using System.Threading.Tasks;
+﻿using System.Collections.Generic;
+using System.Threading.Tasks;
+using Microsoft.AspNetCore.Routing;
 
 namespace EventStore.Plugins.Authentication {
 	public interface IAuthenticationProvider {
@@ -13,5 +15,26 @@ namespace EventStore.Plugins.Authentication {
 		/// </summary>
 		/// <param name="authenticationRequest"></param>
 		void Authenticate(AuthenticationRequest authenticationRequest);
+
+		/// <summary>
+		///     Return a unique name used to externally identify the authentication provider.
+		/// </summary>
+		string Name { get; }
+
+		/// <summary>
+		///     Get public properties which may be required for the authentication flow.
+		/// </summary>
+		IEnumerable<KeyValuePair<string,string>> GetPublicProperties();
+
+		/// <summary>
+		///     Create any required endpoints.
+		/// </summary>
+		/// <param name="endpointRouteBuilder"></param>
+		void ConfigureEndpoints(IEndpointRouteBuilder endpointRouteBuilder);
+
+		/// <summary>
+		///     Get supported authentication schemes.
+		/// </summary>
+		IReadOnlyList<string> GetSupportedAuthenticationSchemes();
 	}
 }
