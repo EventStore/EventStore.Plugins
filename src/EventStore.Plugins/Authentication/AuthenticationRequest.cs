@@ -4,8 +4,6 @@ using System.Security.Claims;
 
 namespace EventStore.Plugins.Authentication {
 	public abstract class AuthenticationRequest {
-		private readonly IReadOnlyDictionary<string, string> _tokens;
-
 		/// <summary>
 		///     The Identifier for the source that this request came from
 		/// </summary>
@@ -21,11 +19,16 @@ namespace EventStore.Plugins.Authentication {
 		/// </summary>
 		public readonly string SuppliedPassword;
 
+		/// <summary>
+		///		All supplied authentication tokens for the request
+		/// </summary>
+		public readonly IReadOnlyDictionary<string, string> Tokens;
+
 		protected AuthenticationRequest(string id, IReadOnlyDictionary<string, string> tokens) {
 			if (id == null) throw new ArgumentNullException(nameof(id));
 			if (tokens == null) throw new ArgumentNullException(nameof(tokens));
 			Id = id;
-			_tokens = tokens;
+			Tokens = tokens;
 			Name = GetToken("uid");
 			SuppliedPassword = GetToken("pwd");
 		}
@@ -42,7 +45,7 @@ namespace EventStore.Plugins.Authentication {
 		/// </summary>
 		/// <param name="key"></param>
 		/// <returns></returns>
-		public string GetToken(string key) => _tokens.TryGetValue(key, out var token) ? token : null;
+		public string GetToken(string key) => Tokens.TryGetValue(key, out var token) ? token : null;
 
 		/// <summary>
 		///     The request is unauthorized
