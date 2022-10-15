@@ -9,7 +9,7 @@ on:
     - v*
 
 env:
-  DOTNET_SDK_VERSION: 5.0.x
+  DOTNET_SDK_VERSION: 6.0.x
 jobs:
   vulnerability-scan:
     runs-on: ubuntu-latest
@@ -36,11 +36,11 @@ jobs:
     name: ci/github/build-${{ matrix.os }}/EventStore.Plugins${{ matrix.test }}
     steps:
     - name: Checkout
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
       with:
         fetch-depth: 0
     - name: Install Dotnet
-      uses: actions/setup-dotnet@v1
+      uses: actions/setup-dotnet@v3
       with:
         dotnet-version: ${{ env.DOTNET_SDK_VERSION }}
     - name: Compile
