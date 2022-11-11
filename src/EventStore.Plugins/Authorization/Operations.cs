@@ -21,8 +21,8 @@
 				private const string Resource = Node.Resource + "/scavenge";
 				public static readonly OperationDefinition Start = new OperationDefinition(Resource, "start");
 				public static readonly OperationDefinition Stop = new OperationDefinition(Resource, "stop");
+				public static readonly OperationDefinition Read = new OperationDefinition(Resource, "read");
 			}
-
 
 			public static class Information {
 				private const string Resource = Node.Resource + "/info";
