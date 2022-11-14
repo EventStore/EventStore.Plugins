@@ -12,16 +12,23 @@ jobs:
   vulnerability-scan:
     runs-on: ubuntu-latest
     name: ci/github/scan-vulnerabilities
-    container: mcr.microsoft.com/dotnet/core/sdk:3.1-bionic
     steps:
     - name: Checkout
       uses: actions/checkout@v3
+      with:
+        fetch-depth: 0
+    - name: Install Dotnet
+      uses: actions/setup-dotnet@v3
+      with:
+        dotnet-version: |
+          6.0.x
+          7.0.x
     - name: Scan for Vulnerabilities
+      shell: bash
       run: |
-        cd src
-        dotnet tool restore
-        dotnet restore
-        dotnet tool run dotnet-retire
+        dotnet restore src
+        dotnet list src package --vulnerable --include-transitive | tee vulnerabilities.txt
+        ! cat vulnerabilities.txt | grep -q "has the following vulnerable packages"
   build:
     strategy:
       fail-fast: false
@@ -51,24 +58,7 @@ jobs:
     - name: Run Tests
       shell: bash
       run: |
-        --logger:html --logger:trx --logger:"console;verbosity=normal" \
-        --results-directory=$(pwd)/test-results/EventStore.Plugins${{ matrix.test }} \
         dotnet test --configuration ${{ matrix.configuration }} --framework=${{ matrix.framework }} --blame \
+        --logger:"GitHubActions;report-warnings=false" \
+        --logger:"console;verbosity=normal" \
         src/EventStore.Plugins${{ matrix.test }}
-    - name: Collect Test Results
-      shell: bash
-      if: always()
-      run: |
-        echo $(find ./test-results -name "*.html" | xargs cat) > test-results.html
-    - name: Publish Test Results (HTML)
-      uses: actions/upload-artifact@v1
-      if: always()
-      with:
-        path: test-results.html
-        name: test-results-${{ matrix.configuration }}-EventStore.Plugins${{ matrix.test }}.html
-    - name: Publish Test Results (All)
-      uses: actions/upload-artifact@v1
-      if: always()
-      with:
-        name: test-results-${{ matrix.configuration }}-EventStore.Plugins${{ matrix.test }}
-        path: test-results
