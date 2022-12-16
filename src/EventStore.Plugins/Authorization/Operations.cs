@@ -24,6 +24,11 @@
 				public static readonly OperationDefinition Read = new OperationDefinition(Resource, "read");
 			}
 
+			public static class Redaction {
+				private const string Resource = Node.Resource + "/redaction";
+				public static readonly OperationDefinition SwitchChunk = new OperationDefinition(Resource, "switchChunk");
+			}
+
 			public static class Information {
 				private const string Resource = Node.Resource + "/info";
 
