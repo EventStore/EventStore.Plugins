@@ -193,5 +193,11 @@
 				}
 			}
 		}
+
+		public static class Authorization {
+			private const string Resource = "authorization";
+			public static readonly OperationDefinition GetClaims = new Operation(Resource, "getClaims");
+			public static readonly OperationDefinition CheckAccess = new Operation(Resource, "checkAccess");
+		}
 	}
 }
