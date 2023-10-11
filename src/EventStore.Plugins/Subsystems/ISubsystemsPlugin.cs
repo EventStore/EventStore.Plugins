@@ -8,5 +8,5 @@ public interface ISubsystemsPlugin<TArg> {
 	string Name { get; }
 	string Version { get; }
 	string CommandLineName { get; }
-	IEnumerable<ISubsystemFactory<TArg>> GetSubsystemFactories(string configPath);
+	IReadOnlyList<ISubsystemFactory<TArg>> GetSubsystemFactories(string configPath);
 }
