@@ -8,6 +8,6 @@ namespace EventStore.Plugins.Subsystems;
 public interface ISubsystem {
 	IApplicationBuilder Configure(IApplicationBuilder builder);
 	IServiceCollection ConfigureServices(IServiceCollection services);
-	IEnumerable<Task> Start();
+	IReadOnlyList<Task> Start();
 	void Stop();
 }
