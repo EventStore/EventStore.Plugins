@@ -1,5 +1,5 @@
 ﻿namespace EventStore.Plugins.Subsystems;
 
-public interface ISubsystemFactory<TArg> {
-	ISubsystem Create(TArg arg);
+public interface ISubsystemFactory {
+	ISubsystem Create();
 }
