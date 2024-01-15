@@ -3,10 +3,9 @@
 namespace EventStore.Plugins.Subsystems;
 
 // A plugin that can create multiple subsystems.
-// A TArg is required to produce each subsystem from its respective factory.
-public interface ISubsystemsPlugin<TArg> {
+public interface ISubsystemsPlugin {
 	string Name { get; }
 	string Version { get; }
 	string CommandLineName { get; }
-	IReadOnlyList<ISubsystemFactory<TArg>> GetSubsystemFactories(string configPath);
+	IReadOnlyList<ISubsystemFactory> GetSubsystemFactories(string configPath);
 }

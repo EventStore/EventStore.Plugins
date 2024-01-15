@@ -26,8 +26,9 @@ jobs:
     - name: Scan for Vulnerabilities
       shell: bash
       run: |
-        dotnet restore src
-        dotnet list src package --vulnerable --include-transitive | tee vulnerabilities.txt
+        cd src
+        dotnet restore
+        dotnet list package --vulnerable --include-transitive | tee vulnerabilities.txt
         ! cat vulnerabilities.txt | grep -q "has the following vulnerable packages"
   build:
     strategy:
