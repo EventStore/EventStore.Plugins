@@ -7,5 +7,5 @@ public interface ISubsystemsPlugin {
 	string Name { get; }
 	string Version { get; }
 	string CommandLineName { get; }
-	IReadOnlyList<ISubsystemFactory> GetSubsystemFactories(string configPath);
+	IReadOnlyList<ISubsystem> GetSubsystems();
 }
