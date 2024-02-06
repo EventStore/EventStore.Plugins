@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Security.Claims;
+using System.Security.Cryptography.X509Certificates;
 
 namespace EventStore.Plugins.Authentication {
 	public abstract class AuthenticationRequest {
@@ -20,24 +21,24 @@ namespace EventStore.Plugins.Authentication {
 		public readonly string SuppliedPassword;
 
 		/// <summary>
+		///     Whether or not a client certificate was supplied with the request
+		/// </summary>
+		public readonly bool HasSuppliedClientCertificate;
+
+		/// <summary>
 		///		All supplied authentication tokens for the request
 		/// </summary>
 		public readonly IReadOnlyDictionary<string, string> Tokens;
 
 		protected AuthenticationRequest(string id, IReadOnlyDictionary<string, string> tokens) {
-			if (id == null) throw new ArgumentNullException(nameof(id));
-			if (tokens == null) throw new ArgumentNullException(nameof(tokens));
+			ArgumentNullException.ThrowIfNull(id);
+			ArgumentNullException.ThrowIfNull(tokens);
+
 			Id = id;
 			Tokens = tokens;
 			Name = GetToken("uid");
 			SuppliedPassword = GetToken("pwd");
-		}
-
-		protected AuthenticationRequest(string id, string name, string suppliedPassword)
-			: this(id, new Dictionary<string, string> {
-				["uid"] = name,
-				["pwd"] = suppliedPassword
-			}) {
+			HasSuppliedClientCertificate = GetToken("client-certificate") != null;
 		}
 
 		/// <summary>
