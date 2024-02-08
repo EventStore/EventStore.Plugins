@@ -32,7 +32,7 @@ public class HttpAuthenticationRequest : AuthenticationRequest {
 		}) {
 	}
 
-	public static HttpAuthenticationRequest CreateWithCertificate(HttpContext context, string name, X509Certificate2 clientCertificate) =>
+	public static HttpAuthenticationRequest CreateWithValidCertificate(HttpContext context, string name, X509Certificate2 clientCertificate) =>
 		new(context, new Dictionary<string, string> {
 			["uid"] = name,
 			["client-certificate"] = clientCertificate.ExportCertificatePem(),
