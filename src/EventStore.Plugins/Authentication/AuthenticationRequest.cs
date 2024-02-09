@@ -21,9 +21,9 @@ namespace EventStore.Plugins.Authentication {
 		public readonly string SuppliedPassword;
 
 		/// <summary>
-		///     Whether or not a client certificate was supplied with the request
+		///     Whether or not a valid client certificate was supplied with the request
 		/// </summary>
-		public readonly bool HasSuppliedClientCertificate;
+		public readonly bool HasValidClientCertificate;
 
 		/// <summary>
 		///		All supplied authentication tokens for the request
@@ -38,7 +38,7 @@ namespace EventStore.Plugins.Authentication {
 			Tokens = tokens;
 			Name = GetToken("uid");
 			SuppliedPassword = GetToken("pwd");
-			HasSuppliedClientCertificate = GetToken("client-certificate") != null;
+			HasValidClientCertificate = GetToken("client-certificate") != null;
 		}
 
 		/// <summary>
