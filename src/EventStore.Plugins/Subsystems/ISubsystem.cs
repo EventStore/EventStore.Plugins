@@ -11,7 +11,7 @@ public interface ISubsystem {
 	string Name { get; }
 	IApplicationBuilder Configure(IApplicationBuilder builder);
 	IServiceCollection ConfigureServices(IServiceCollection services, IConfiguration configuration);
-	void CollectTelemetry(Action<string, JsonNode> collect);
+	void CollectTelemetry(Action<string, JsonNode> reply);
 	Task Start();
 	Task Stop();
 }
