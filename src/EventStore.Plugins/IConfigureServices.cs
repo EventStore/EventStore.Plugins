@@ -4,7 +4,7 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace EventStore.Plugins;
 
-public interface IConfigurationServices {
+public interface IConfigureServices {
 	IApplicationBuilder Configure(IApplicationBuilder builder);
 	IServiceCollection ConfigureServices(IServiceCollection services, IConfiguration configuration);
 }

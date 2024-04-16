@@ -7,7 +7,7 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace EventStore.Plugins.Subsystems;
 
-public interface ISubsystem : IConfigurationServices {
+public interface ISubsystem : IConfigureServices {
 	string Name { get; }
 	void CollectTelemetry(Action<string, JsonNode> reply);
 	Task Start();

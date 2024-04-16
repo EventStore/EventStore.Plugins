@@ -2,7 +2,7 @@ using Microsoft.AspNetCore.Http;
 
 namespace EventStore.Plugins.Authentication;
 
-public interface IHttpAuthenticationProvider : IConfigurationServices {
+public interface IHttpAuthenticationProvider : IConfigureServices {
 	/// <summary>
 	///     Return a unique name used to externally identify the authentication provider.
 	/// </summary>
