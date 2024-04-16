@@ -2,7 +2,7 @@
 
 namespace EventStore.Plugins.MD5;
 
-public interface IMD5Provider {
+public interface IMD5Provider : IConfigurationServices {
 	/// <summary>
 	///     Creates an instance of the MD5 hash algorithm implementation
 	/// </summary>
