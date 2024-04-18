@@ -3,7 +3,7 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Routing;
 
 namespace EventStore.Plugins.Authentication {
-	public interface IAuthenticationProvider {
+	public interface IAuthenticationProvider : IPlugableComponent {
 		/// <summary>
 		///     Initialize the AuthenticationProvider. Event Store will wait until this task completes before becoming ready.
 		/// </summary>
