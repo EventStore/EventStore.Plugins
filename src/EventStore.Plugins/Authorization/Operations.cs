@@ -74,6 +74,11 @@ public static class Operations {
 			public static readonly OperationDefinition Update = new(Resource, "update");
 			public static readonly OperationDefinition ClientRead = new($"{Resource}/client", "read");
 		}
+
+		public static class Transform {
+			const string Resource = "transform";
+			public static readonly OperationDefinition Set = new(Resource, "set");
+		}
 	}
 
 	public static class Streams {
