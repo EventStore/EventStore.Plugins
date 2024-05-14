@@ -6,7 +6,7 @@ namespace EventStore.Plugins;
 [PublicAPI]
 public abstract class SubsystemsPlugin : Plugin, ISubsystem, ISubsystemsPlugin {
     protected SubsystemsPlugin(
-        string? name = null, string version = "0.0.1",
+        string? name = null, string? version = null,
         string? commandLineName = null, string? diagnosticsName = null,
         params KeyValuePair<string, object?>[] diagnosticsTags) : base(name, version, diagnosticsName, diagnosticsTags) {
         CommandLineName = commandLineName ?? Name.Underscore().ToLowerInvariant();
