@@ -1,6 +1,4 @@
-﻿using System.Collections.Generic;
-
-namespace EventStore.Plugins.Subsystems;
+﻿namespace EventStore.Plugins.Subsystems;
 
 // A plugin that can create multiple subsystems.
 public interface ISubsystemsPlugin {

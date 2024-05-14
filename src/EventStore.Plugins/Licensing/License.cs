@@ -1,9 +1,6 @@
 ﻿using System.Security.Cryptography;
-using System.Threading.Tasks;
-using System;
 using Microsoft.IdentityModel.JsonWebTokens;
 using Microsoft.IdentityModel.Tokens;
-using System.Collections.Generic;
 
 namespace EventStore.Plugins.Licensing;
 
@@ -26,18 +23,18 @@ public record License(JsonWebToken Token) {
 			Issuer = "esdb",
 			Expires = DateTime.UtcNow + TimeSpan.FromHours(1),
 			Claims = claims,
-			SigningCredentials = new SigningCredentials(new RsaSecurityKey(rsa), SecurityAlgorithms.RsaSha256),
+			SigningCredentials = new(new RsaSecurityKey(rsa), SecurityAlgorithms.RsaSha256),
 		});
 
 		var result = await ValidateTokenAsync(publicKey, token);
 
 		if (!result.IsValid)
-			throw new Exception("Token could not be validated");
+			throw new("Token could not be validated");
 
 		if (result.SecurityToken is not JsonWebToken jwt)
-			throw new Exception("Token is not a JWT");
+			throw new("Token is not a JWT");
 
-		return new License(jwt);
+		return new(jwt);
 	}
 
 	private static async Task<TokenValidationResult> ValidateTokenAsync(string publicKey, string token) {
@@ -48,7 +45,8 @@ public record License(JsonWebToken Token) {
 		rsa.ImportRSAPublicKey(Convert.FromBase64String(publicKey), out _);
 		var result = await new JsonWebTokenHandler().ValidateTokenAsync(
 			token,
-			new TokenValidationParameters {
+			new()
+            {
 				ValidIssuer = "esdb",
 				ValidAudience = "esdb",
 				IssuerSigningKey = new RsaSecurityKey(rsa),

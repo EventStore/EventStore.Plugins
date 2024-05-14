@@ -1,5 +1,4 @@
-﻿using System;
-using System.Text;
+﻿using System.Text;
 
 namespace EventStore.Plugins.Authorization {
 	public readonly struct Operation {
@@ -24,7 +23,7 @@ namespace EventStore.Plugins.Authorization {
 			var memory = new Memory<Parameter>(new Parameter[Parameters.Length + parameters.Length]);
 			if (!Parameters.IsEmpty) Parameters.CopyTo(memory);
 			parameters.CopyTo(memory.Slice(Parameters.Length));
-			return new Operation(Resource, Action, memory);
+			return new(Resource, Action, memory);
 		}
 
 		public Operation WithParameters(params Parameter[] parameters) {
@@ -38,7 +37,7 @@ namespace EventStore.Plugins.Authorization {
 		}
 
 		public static implicit operator OperationDefinition(Operation operation) {
-			return new OperationDefinition(operation.Resource, operation.Action);
+			return new(operation.Resource, operation.Action);
 		}
 
 		public override string ToString() {
