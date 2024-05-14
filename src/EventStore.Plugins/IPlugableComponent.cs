@@ -6,8 +6,10 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace EventStore.Plugins;
 
-// Component that can be plugged in to the main server.
-// Plugins are libraries that result in IPlugableComponents being produced and plugged in.
+/// <summary>
+/// Component that can be plugged in to the main server.
+/// Plugins are libraries that result in IPlugableComponents being produced and plugged in.
+/// </summary>
 public interface IPlugableComponent {
     string Name { get; }
     string DiagnosticsName { get; }
