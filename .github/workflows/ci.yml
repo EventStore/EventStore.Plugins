@@ -25,7 +25,6 @@ jobs:
     - name: Scan for Vulnerabilities
       shell: bash
       run: |
-        cd src
         dotnet restore
         dotnet list package --vulnerable --include-transitive | tee vulnerabilities.txt
         ! cat vulnerabilities.txt | grep -q "has the following vulnerable packages"
@@ -53,7 +52,7 @@ jobs:
     - name: Compile
       shell: bash
       run: |
-        dotnet build --configuration ${{ matrix.configuration }} --framework=${{ matrix.framework }} src/EventStore.Plugins${{ matrix.test }}
+        dotnet build --configuration ${{ matrix.configuration }} --framework=${{ matrix.framework }} test/EventStore.Plugins${{ matrix.test }}
     - name: Run Tests
       shell: bash
       run: |
