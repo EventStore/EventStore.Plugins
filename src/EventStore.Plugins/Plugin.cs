@@ -44,7 +44,7 @@ public abstract class Plugin : IPlugableComponent, IDisposable {
     public string DiagnosticsName { get; }
 
     /// <inheritdoc />
-    public bool Enabled { get; private set; }
+    public bool Enabled { get; protected set; }
 
     /// <inheritdoc />
     public KeyValuePair<string, object?>[] DiagnosticsTags { get; }
