@@ -11,7 +11,7 @@ namespace EventStore.Plugins;
 [PublicAPI]
 public abstract class Plugin : IPlugableComponent, IDisposable {
     protected Plugin(
-        string? name = null, string version = "0.0.1", 
+        string? name = null, string? version = null,
         string? diagnosticsName = null,
         params KeyValuePair<string, object?>[] diagnosticsTags) {
         Name = name ?? GetType().Name
@@ -19,7 +19,7 @@ public abstract class Plugin : IPlugableComponent, IDisposable {
             .Replace("Plugin", "")
             .Replace("Component", "");
 
-        Version = version;
+        Version = version ?? GetType().Assembly.GetName().Version?.ToString() ?? "0.0.1";
         
         DiagnosticsName = diagnosticsName ?? Name;
         DiagnosticsTags = diagnosticsTags;
