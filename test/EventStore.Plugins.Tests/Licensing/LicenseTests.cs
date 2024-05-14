@@ -1,15 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Security.Cryptography;
-using System.Threading.Tasks;
+﻿using System.Security.Cryptography;
 using EventStore.Plugins.Licensing;
 using Xunit;
 
 namespace EventStore.Plugins.Tests.Licensing;
 
 public class LicenseTests {
-    public static (string PublicKey, string PrivateKey) CreateKeyPair() {
+    static (string PublicKey, string PrivateKey) CreateKeyPair() {
         using var rsa = RSA.Create(1024); // was failing with 512?!?
         var publicKey = Convert.ToBase64String(rsa.ExportRSAPublicKey());
         var privateKey = Convert.ToBase64String(rsa.ExportRSAPrivateKey());

@@ -1,4 +1,3 @@
-using System.IO;
 using Xunit;
 
 namespace EventStore.Plugins.Tests.ConfigurationReaderTests;
@@ -9,7 +8,7 @@ public class when_reading_valid_configuration {
         var settings = ConfigParser.ReadConfiguration<LdapsSettings>
             (Path.Combine("ConfigurationReaderTests", "valid_node_config.yaml"), "LdapsAuth");
 
-        Assert.Equal("13.64.104.29", settings.Host);
+        Assert.Equal("13.64.104.29", settings!.Host);
         Assert.Equal(389, settings.Port);
         Assert.False(settings.ValidateServerCertificate);
         Assert.False(settings.UseSSL);

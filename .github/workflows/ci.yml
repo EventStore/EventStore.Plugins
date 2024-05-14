@@ -60,4 +60,4 @@ jobs:
         dotnet test --configuration ${{ matrix.configuration }} --framework=${{ matrix.framework }} --blame \
         --logger:"GitHubActions;report-warnings=false" \
         --logger:"console;verbosity=normal" \
-        src/EventStore.Plugins${{ matrix.test }}
+        test/EventStore.Plugins${{ matrix.test }}

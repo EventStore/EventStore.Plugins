@@ -1,5 +1,6 @@
+using System.Diagnostics;
 using System.Diagnostics.Metrics;
-using System.Text.Json.Nodes;
+using EventStore.Plugins.Diagnostics;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
@@ -8,7 +9,7 @@ using Microsoft.Extensions.DependencyInjection;
 namespace EventStore.Plugins;
 
 [PublicAPI]
-public abstract class Plugin : IPlugableComponent {
+public abstract class Plugin : IPlugableComponent, IDisposable {
     protected Plugin(
         string? name = null, string version = "0.0.1", 
         string? diagnosticsName = null,
@@ -24,28 +25,69 @@ public abstract class Plugin : IPlugableComponent {
         DiagnosticsTags = diagnosticsTags;
         
         Meter = new(DiagnosticsName, Version, DiagnosticsTags);
+        DiagnosticListener = new(DiagnosticsName);
         
         Enabled = true;
     }
-
-    protected Plugin(
-        string? name = null, string version = "0.0.1", string? diagnosticsName = null,
-        params (string Key, object? Value)[] diagnosticsTags) : this(name, version, diagnosticsName, diagnosticsTags.Length > 0
-        ? diagnosticsTags.Select(t => new KeyValuePair<string, object?>(t.Key, t.Value)).ToArray()
-        : []) { }
     
-    Meter Meter { get; }
+    protected Meter Meter { get; }
+    
+    DiagnosticListener DiagnosticListener { get; }
 
-    public string Name            { get; }
-    public string Version         { get; }
+    /// <inheritdoc />
+    public string Name { get; }
+
+    /// <inheritdoc />
+    public string Version { get; }
+
+    /// <inheritdoc />
     public string DiagnosticsName { get; }
-    public bool   Enabled         { get; protected set; }
 
-    public virtual KeyValuePair<string, object?>[] DiagnosticsTags { get; }
+    /// <inheritdoc />
+    public bool Enabled { get; private set; }
+
+    /// <inheritdoc />
+    public KeyValuePair<string, object?>[] DiagnosticsTags { get; }
     
+    /// <inheritdoc />
     public virtual IServiceCollection ConfigureServices(IServiceCollection services, IConfiguration configuration) => services;
-
-    public virtual IApplicationBuilder Configure(WebHostBuilderContext context, ApplicationBuilder app) => app;
     
-    public virtual void CollectTelemetry(Action<string, JsonNode> reply) { }
+    /// <inheritdoc />
+    public virtual IApplicationBuilder Configure(WebHostBuilderContext context, IApplicationBuilder app) => app;
+    
+    protected internal void PublishDiagnostics(Dictionary<string, object?> eventData) {
+        // if (DiagnosticListener.IsEnabled(nameof(PluginDiagnosticsData))) 
+        DiagnosticListener.Write(
+            nameof(PluginDiagnosticsData), 
+            new PluginDiagnosticsData(
+                DiagnosticsName, 
+                nameof(PluginDiagnosticsData), 
+                eventData, 
+                DateTimeOffset.UtcNow
+            )
+        );
+    }
+    
+    protected internal void PublishDiagnosticsEvent<T>(T pluginEvent) => 
+        DiagnosticListener.Write(typeof(T).Name, pluginEvent);
+
+    protected internal void PublishDiagnostics(string eventName, Dictionary<string, object?> eventData) {
+        // if (DiagnosticListener.IsEnabled(nameof(PluginDiagnosticsData))) 
+        DiagnosticListener.Write(
+            nameof(PluginDiagnosticsData), 
+            new PluginDiagnosticsData(
+                DiagnosticsName, 
+                eventName, 
+                eventData, 
+                DateTimeOffset.UtcNow
+            )
+        );
+    }
+
+    /// <inheritdoc />
+    public void Dispose() {
+        Meter.Dispose();
+        DiagnosticListener.Dispose();
+    }
 }
+
