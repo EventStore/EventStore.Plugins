@@ -78,11 +78,11 @@ public abstract class Plugin : IPlugableComponent, IDisposable {
     /// <inheritdoc />
     public bool Enabled => IsEnabledResult.Enabled;
 
-    public virtual void ConfigureServices(IServiceCollection services, IConfiguration configuration) { }
+    protected virtual void ConfigureServices(IServiceCollection services, IConfiguration configuration) { }
 
-    public virtual void ConfigureApplication(IApplicationBuilder app, IConfiguration configuration) { }
+    protected virtual void ConfigureApplication(IApplicationBuilder app, IConfiguration configuration) { }
 
-    public virtual (bool Enabled, string EnableInstructions) IsEnabled(IConfiguration configuration) => (true, "");
+    protected virtual (bool Enabled, string EnableInstructions) IsEnabled(IConfiguration configuration) => (true, "");
 
     IServiceCollection IPlugableComponent.ConfigureServices(IServiceCollection services, IConfiguration configuration) {
         Configuration   = configuration;

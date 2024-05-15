@@ -40,7 +40,7 @@ public class PluginMetricsTests {
     class AdamSmasherPlugin(params KeyValuePair<string, object?>[] diagnosticsTags) : Plugin(diagnosticsTags: diagnosticsTags) {
         public Counter<int> TestCounter { get; private set; } = null!;
 
-        public override void ConfigureApplication(IApplicationBuilder app, IConfiguration configuration) {
+        protected override void ConfigureApplication(IApplicationBuilder app, IConfiguration configuration) {
             var meterFactory = app.ApplicationServices.GetRequiredService<IMeterFactory>();
         
             var meter = meterFactory.Create(DiagnosticsName, Version, DiagnosticsTags);
