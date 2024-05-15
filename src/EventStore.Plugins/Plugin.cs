@@ -95,20 +95,13 @@ public abstract class Plugin : IPlugableComponent, IDisposable {
     }
     
     IApplicationBuilder IPlugableComponent.Configure(IApplicationBuilder app) {
+        PublishDiagnostics(new() { ["enabled"] = Enabled });
+        
         var logger = app.ApplicationServices.GetRequiredService<ILoggerFactory>().CreateLogger(GetType());
         
         var license = app.ApplicationServices.GetService<License>();
-
-        if (Enabled && LicensePublicKey is not null && (license is null || !license.IsValid(LicensePublicKey))) {
+        if (Enabled && LicensePublicKey is not null && (license is null || !license.IsValid(LicensePublicKey)))
             throw new PluginLicenseException(Name);
-            
-            // logger.LogCritical(
-            //     "A valid license is required but was not found. " +
-            //     "Please obtain a license or disable the plugin."
-            // );
-            //
-            // return app;
-        }
         
         if (!Enabled) {
             logger.LogInformation(
@@ -118,22 +111,23 @@ public abstract class Plugin : IPlugableComponent, IDisposable {
 
             return app;
         }
-        
+      
         logger.LogInformation("{Version} plugin enabled.", Version);
 
         ConfigureApplication(app, Configuration);
+        
+        PublishDiagnostics(new() { ["enabled"] = Enabled });
 
         return app;
     }
     
     protected internal void PublishDiagnostics(string eventName, Dictionary<string, object?> eventData) {
-        // if (DiagnosticListener.IsEnabled(nameof(PluginDiagnosticsData))) 
         DiagnosticListener.Write(
-            nameof(PluginDiagnosticsData), 
+            nameof(PluginDiagnosticsData),
             new PluginDiagnosticsData(
-                DiagnosticsName, 
-                eventName, 
-                eventData, 
+                DiagnosticsName,
+                eventName,
+                eventData,
                 DateTimeOffset.UtcNow
             )
         );
