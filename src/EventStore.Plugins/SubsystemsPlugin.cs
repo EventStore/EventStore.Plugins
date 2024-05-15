@@ -1,16 +1,37 @@
-using System.Text.RegularExpressions;
 using EventStore.Plugins.Subsystems;
+using static System.StringComparison;
 
 namespace EventStore.Plugins;
 
+public record SubsystemsPluginOptions : PluginOptions {
+    public string? CommandLineName { get; init; }
+}
+
 [PublicAPI]
 public abstract class SubsystemsPlugin : Plugin, ISubsystem, ISubsystemsPlugin {
+    protected SubsystemsPlugin(SubsystemsPluginOptions options) : base(options) {
+        CommandLineName = options.CommandLineName ?? options.Name ?? GetType().Name
+            .Replace("Plugin", "", OrdinalIgnoreCase)
+            .Replace("Component", "", OrdinalIgnoreCase)
+            .Replace("Subsystems", "", OrdinalIgnoreCase)
+            .Replace("Subsystem", "", OrdinalIgnoreCase)
+            .Kebaberize();
+    }
+    
     protected SubsystemsPlugin(
         string? name = null, string? version = null,
-        string? commandLineName = null, string? diagnosticsName = null,
-        params KeyValuePair<string, object?>[] diagnosticsTags) : base(name, version, diagnosticsName, diagnosticsTags) {
-        CommandLineName = commandLineName ?? Name.Underscore().ToLowerInvariant();
-    }
+        string? licensePublicKey = null,
+        string? commandLineName = null,
+        string? diagnosticsName = null,
+        params KeyValuePair<string, object?>[] diagnosticsTags
+    ) : this(new() {
+        Name = name,
+        Version = version,
+        LicensePublicKey = licensePublicKey,
+        DiagnosticsName = diagnosticsName,
+        DiagnosticsTags = diagnosticsTags,
+        CommandLineName = commandLineName
+    }) { }
     
     public string CommandLineName { get; }
     
@@ -19,17 +40,4 @@ public abstract class SubsystemsPlugin : Plugin, ISubsystem, ISubsystemsPlugin {
     public virtual Task Stop() => Task.CompletedTask;
 
     public virtual IReadOnlyList<ISubsystem> GetSubsystems() => [this];
-}
-
-
-static class InflectorExtensions {
-    public static string Underscore(this string input) {
-        return Regex.Replace(
-            Regex.Replace(
-                Regex.Replace(input, @"([\p{Lu}]+)([\p{Lu}][\p{Ll}])", "$1_$2"), @"([\p{Ll}\d])([\p{Lu}])",
-                "$1_$2"
-            ),
-            @"[-\s]", "_"
-        ).ToLower();
-    }
 }

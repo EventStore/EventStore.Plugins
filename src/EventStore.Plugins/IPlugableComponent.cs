@@ -1,5 +1,4 @@
 using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -45,8 +44,7 @@ public interface IPlugableComponent {
     /// <summary>
     /// Configures the application using the provided WebHostBuilderContext and IApplicationBuilder.
     /// </summary>
-    /// <param name="context">The WebHostBuilderContext to use for configuration.</param>
     /// <param name="builder">The IApplicationBuilder to use for configuration.</param>
     /// <returns>The configured IApplicationBuilder.</returns>
-    IApplicationBuilder Configure(WebHostBuilderContext context, IApplicationBuilder builder);
+    IApplicationBuilder Configure(IApplicationBuilder builder);
 }

@@ -1,7 +1,8 @@
 using System.Diagnostics.Metrics;
-using FluentAssertions;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Diagnostics.Metrics.Testing;
-using Xunit;
 
 namespace EventStore.Plugins.Tests.Diagnostics;
 
@@ -9,14 +10,24 @@ public class PluginMetricsTests {
     [Fact]
     public void can_receive_metrics_from_plugin() {
         // Arrange
-        using var plugin = new TestPlugin(diagnosticsTags: new KeyValuePair<string, object?>("test_name", "can_receive_metrics_from_plugin"));
-
-        using var collector = new MetricCollector<int>(null, plugin.DiagnosticsName, plugin.TestCounter.Name);
+        IPlugableComponent plugin = new AdamSmasherPlugin(diagnosticsTags: new KeyValuePair<string, object?>("test_name", "can_receive_metrics_from_plugin"));
+        
+        var builder = WebApplication.CreateBuilder();
+        
+        plugin.ConfigureServices(builder.Services, builder.Configuration);
+        
+        using var app = builder.Build();
+        
+        plugin.Configure(app);
+        
+        using var collector = new MetricCollector<int>(
+            app.Services.GetRequiredService<IMeterFactory>(), 
+            plugin.DiagnosticsName, 
+            ((AdamSmasherPlugin)plugin).TestCounter.Name
+        );
 
         // Act
-        
-        // we also need to add then here? ffs... they should propagate from the meter...
-        plugin.TestCounter.Add(1, plugin.DiagnosticsTags); 
+        ((AdamSmasherPlugin)plugin).TestCounter.Add(1, plugin.DiagnosticsTags); // we also need to add then here? ffs... they should propagate from the meter...
         
         // Assert
         var collectedMeasurement = collector.GetMeasurementSnapshot().Should().ContainSingle().Which;
@@ -26,16 +37,20 @@ public class PluginMetricsTests {
         collectedMeasurement.Tags.Should().BeEquivalentTo(plugin.DiagnosticsTags);
     }
     
-    class TestPlugin : Plugin{
-        public TestPlugin(string? pluginName = null, params KeyValuePair<string, object?>[] diagnosticsTags) : base(pluginName, diagnosticsTags: diagnosticsTags) {
-            TestCounter = Meter.CreateCounter<int>(
+    class AdamSmasherPlugin(params KeyValuePair<string, object?>[] diagnosticsTags) : Plugin(diagnosticsTags: diagnosticsTags) {
+        public Counter<int> TestCounter { get; private set; } = null!;
+
+        public override void ConfigureApplication(IApplicationBuilder app, IConfiguration configuration) {
+            var meterFactory = app.ApplicationServices.GetRequiredService<IMeterFactory>();
+        
+            var meter = meterFactory.Create(DiagnosticsName, Version, DiagnosticsTags);
+
+            TestCounter = meter.CreateCounter<int>(
                 name: "plugin_test_calls", 
                 unit: "int", 
                 description: "just to test the counter", 
                 tags: DiagnosticsTags
             );
         }
-    
-        public Counter<int> TestCounter { get; }
     }
 }

@@ -1,6 +1,5 @@
 ﻿using System.Security.Cryptography;
 using EventStore.Plugins.Licensing;
-using Xunit;
 
 namespace EventStore.Plugins.Tests.Licensing;
 
@@ -20,12 +19,12 @@ public class LicenseTests {
             { "foo", "bar" }
         });
 
-        // check repeatedly because of https://github.com/dotnet/runtime/issues/43087
-        Assert.True(await license.IsValidAsync(publicKey));
-        Assert.True(await license.IsValidAsync(publicKey));
-        Assert.True(await license.IsValidAsync(publicKey));
+		// check repeatedly because of https://github.com/dotnet/runtime/issues/43087
+		(await license.IsValidAsync(publicKey)).Should().BeTrue();
+		(await license.IsValidAsync(publicKey)).Should().BeTrue();
+		(await license.IsValidAsync(publicKey)).Should().BeTrue();
 
-        Assert.Equal("bar", license.Token.Claims.First(c => c.Type == "foo").Value);
+        license.Token.Claims.First(c => c.Type == "foo").Value.Should().Be("bar");
     }
 
     [Fact]
@@ -37,7 +36,7 @@ public class LicenseTests {
             { "foo", "bar" }
         });
 
-        Assert.False(await license.IsValidAsync(publicKey2));
+		(await license.IsValidAsync(publicKey2)).Should().BeFalse();
     }
 
     [Fact]
@@ -45,11 +44,10 @@ public class LicenseTests {
         var (publicKey, _) = CreateKeyPair();
         var (_, privateKey) = CreateKeyPair();
 
-        var ex = await Assert.ThrowsAsync<Exception>(() =>
-            License.CreateAsync(publicKey, privateKey, new Dictionary<string, object> {
-                { "foo", "bar" }
-            }));
-
-        Assert.Equal("Token could not be validated", ex.Message);
+        Func<Task> act = () => License.CreateAsync(publicKey, privateKey, new Dictionary<string, object> {
+            { "foo", "bar" }
+        });
+        
+        await act.Should().ThrowAsync<Exception>().WithMessage("Token could not be validated");
     }
 }
