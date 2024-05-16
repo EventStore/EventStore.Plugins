@@ -40,9 +40,7 @@ public abstract class AuthenticationRequest {
 	}
 
 	/// <summary>
-	///     Gets the token corresponding to
-	///     <param name="key" />
-	///     .
+	///     Gets the token corresponding to <param name="key" />.
 	/// </summary>
 	/// <param name="key"></param>
 	/// <returns></returns>
