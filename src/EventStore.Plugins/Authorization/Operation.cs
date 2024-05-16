@@ -1,60 +1,51 @@
 ﻿using System.Text;
 
-namespace EventStore.Plugins.Authorization {
-	public readonly struct Operation {
-		public string Resource { get; }
-		public string Action { get; }
-		public ReadOnlyMemory<Parameter> Parameters { get; }
+namespace EventStore.Plugins.Authorization;
 
-		public Operation(OperationDefinition definition) : this(definition.Resource, definition.Action) {
-		}
+public readonly struct Operation {
+	public string Resource { get; }
+	public string Action { get; }
+	public ReadOnlyMemory<Parameter> Parameters { get; }
 
-		public Operation(string resource, string action) : this(resource, action, Array.Empty<Parameter>()) { }
+	public Operation(OperationDefinition definition) : this(definition.Resource, definition.Action) { }
 
-		public Operation WithParameter(string name, string value) {
-			return WithParameters(new Parameter(name, value));
-		}
+	public Operation(string resource, string action) : this(resource, action, Array.Empty<Parameter>()) { }
 
-		public Operation WithParameter(Parameter parameter) {
-			return WithParameters(parameter);
-		}
+	public Operation WithParameter(string name, string value) => WithParameters(new Parameter(name, value));
 
-		public Operation WithParameters(ReadOnlyMemory<Parameter> parameters) {
-			var memory = new Memory<Parameter>(new Parameter[Parameters.Length + parameters.Length]);
-			if (!Parameters.IsEmpty) Parameters.CopyTo(memory);
-			parameters.CopyTo(memory.Slice(Parameters.Length));
-			return new(Resource, Action, memory);
-		}
+	public Operation WithParameter(Parameter parameter) => WithParameters(parameter);
 
-		public Operation WithParameters(params Parameter[] parameters) {
-			return WithParameters(new ReadOnlyMemory<Parameter>(parameters));
-		}
+	public Operation WithParameters(ReadOnlyMemory<Parameter> parameters) {
+		var memory = new Memory<Parameter>(new Parameter[Parameters.Length + parameters.Length]);
+		if (!Parameters.IsEmpty) Parameters.CopyTo(memory);
+		parameters.CopyTo(memory.Slice(Parameters.Length));
+		return new(Resource, Action, memory);
+	}
 
-		public Operation(string resource, string action, Memory<Parameter> parameters) {
-			Resource = resource;
-			Action = action;
-			Parameters = parameters;
-		}
+	public Operation WithParameters(params Parameter[] parameters) => WithParameters(new ReadOnlyMemory<Parameter>(parameters));
 
-		public static implicit operator OperationDefinition(Operation operation) {
-			return new(operation.Resource, operation.Action);
-		}
+	public Operation(string resource, string action, Memory<Parameter> parameters) {
+		Resource = resource;
+		Action = action;
+		Parameters = parameters;
+	}
 
-		public override string ToString() {
-			var sb = new StringBuilder();
-			sb.Append($"{Resource} : {Action}");
-			var parameters = Parameters.Span;
-			if (!parameters.IsEmpty) {
-				sb.Append(" p: {");
-				while (!parameters.IsEmpty) {
-					sb.Append($"{parameters[0].Name} : {parameters[0].Value}");
-					parameters = parameters.Slice(1);
-				}
+	public static implicit operator OperationDefinition(Operation operation) => new(operation.Resource, operation.Action);
 
-				sb.Append("}");
+	public override string ToString() {
+		var sb = new StringBuilder();
+		sb.Append($"{Resource} : {Action}");
+		var parameters = Parameters.Span;
+		if (!parameters.IsEmpty) {
+			sb.Append(" p: {");
+			while (!parameters.IsEmpty) {
+				sb.Append($"{parameters[0].Name} : {parameters[0].Value}");
+				parameters = parameters.Slice(1);
 			}
 
-			return sb.ToString();
+			sb.Append("}");
 		}
+
+		return sb.ToString();
 	}
 }

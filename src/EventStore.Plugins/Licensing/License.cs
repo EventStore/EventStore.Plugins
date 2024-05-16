@@ -10,15 +10,14 @@ public record License(JsonWebToken Token) {
 		var result = await ValidateTokenAsync(publicKey, Token.EncodedToken);
 		return result.IsValid;
 	}
-    
-    public bool IsValid(string publicKey) => 
-        IsValidAsync(publicKey).GetAwaiter().GetResult();
+
+	public bool IsValid(string publicKey) =>
+		IsValidAsync(publicKey).GetAwaiter().GetResult();
 
 	public static async Task<License> CreateAsync(
 		string publicKey,
 		string privateKey,
 		IDictionary<string, object> claims) {
-
 		using var rsa = RSA.Create();
 		rsa.ImportRSAPrivateKey(FromBase64String(privateKey), out _);
 		var tokenHandler = new JsonWebTokenHandler();
@@ -27,7 +26,7 @@ public record License(JsonWebToken Token) {
 			Issuer = "esdb",
 			Expires = DateTime.UtcNow + TimeSpan.FromHours(1),
 			Claims = claims,
-			SigningCredentials = new(new RsaSecurityKey(rsa), SecurityAlgorithms.RsaSha256),
+			SigningCredentials = new(new RsaSecurityKey(rsa), SecurityAlgorithms.RsaSha256)
 		});
 
 		var result = await ValidateTokenAsync(publicKey, token);
@@ -41,13 +40,13 @@ public record License(JsonWebToken Token) {
 		return new(jwt);
 	}
 
-    public static License Create(string publicKey, string privateKey, IDictionary<string, object>? claims = null) => 
-        CreateAsync(publicKey, privateKey, claims ?? new Dictionary<string, object>()).GetAwaiter().GetResult();
-    
-    public static License Create(byte[] publicKey, byte[] privateKey, IDictionary<string, object>? claims = null) => 
-        CreateAsync(ToBase64String(publicKey), ToBase64String(privateKey), claims ?? new Dictionary<string, object>()).GetAwaiter().GetResult();
-    
-    static async Task<TokenValidationResult> ValidateTokenAsync(string publicKey, string token) {
+	public static License Create(string publicKey, string privateKey, IDictionary<string, object>? claims = null) =>
+		CreateAsync(publicKey, privateKey, claims ?? new Dictionary<string, object>()).GetAwaiter().GetResult();
+
+	public static License Create(byte[] publicKey, byte[] privateKey, IDictionary<string, object>? claims = null) =>
+		CreateAsync(ToBase64String(publicKey), ToBase64String(privateKey), claims ?? new Dictionary<string, object>()).GetAwaiter().GetResult();
+
+	static async Task<TokenValidationResult> ValidateTokenAsync(string publicKey, string token) {
 		// not very satisfactory https://github.com/dotnet/runtime/issues/43087
 		CryptoProviderFactory.Default.CacheSignatureProviders = false;
 
@@ -55,16 +54,16 @@ public record License(JsonWebToken Token) {
 		rsa.ImportRSAPublicKey(FromBase64String(publicKey), out _);
 		var result = await new JsonWebTokenHandler().ValidateTokenAsync(
 			token,
-			new()
-            {
+			new() {
 				ValidIssuer = "esdb",
 				ValidAudience = "esdb",
 				IssuerSigningKey = new RsaSecurityKey(rsa),
 				ValidateAudience = true,
 				ValidateIssuerSigningKey = true,
 				ValidateIssuer = true,
-				ValidateLifetime = true,
+				ValidateLifetime = true
 			});
+
 		return result;
 	}
 }
