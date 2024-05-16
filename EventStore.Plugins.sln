@@ -3,9 +3,9 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.8.34309.116
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EventStore.Plugins", "EventStore.Plugins\EventStore.Plugins.csproj", "{504B01C5-281F-4CEA-A12F-D5333AB901EB}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EventStore.Plugins", "src\EventStore.Plugins\EventStore.Plugins.csproj", "{504B01C5-281F-4CEA-A12F-D5333AB901EB}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EventStore.Plugins.Tests", "EventStore.Plugins.Tests\EventStore.Plugins.Tests.csproj", "{8D893FD3-3D17-4EEB-9F5A-A404237B6E78}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EventStore.Plugins.Tests", "test\EventStore.Plugins.Tests\EventStore.Plugins.Tests.csproj", "{8D893FD3-3D17-4EEB-9F5A-A404237B6E78}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

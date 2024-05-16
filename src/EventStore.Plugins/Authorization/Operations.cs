@@ -1,197 +1,177 @@
-﻿namespace EventStore.Plugins.Authorization {
-	public static class Operations {
-		public static class Node {
-			private const string Resource = "node";
-			public static readonly OperationDefinition Redirect = new Operation(Resource, "redirect");
-			public static readonly OperationDefinition Options = new Operation(Resource, "options");
-			public static readonly OperationDefinition Ping = new Operation(Resource, "ping");
+﻿namespace EventStore.Plugins.Authorization;
 
-			public static readonly OperationDefinition StaticContent =
-				new OperationDefinition(Resource + "/content", "read");
+public static class Operations {
+	public static class Node {
+		const string Resource = "node";
+		public static readonly OperationDefinition Redirect = new Operation(Resource, "redirect");
+		public static readonly OperationDefinition Options = new Operation(Resource, "options");
+		public static readonly OperationDefinition Ping = new Operation(Resource, "ping");
 
-			public static readonly OperationDefinition Shutdown = new OperationDefinition(Resource, "shutdown");
-			public static readonly OperationDefinition ReloadConfiguration = new OperationDefinition(Resource, "reloadConfiguration");
-			public static readonly OperationDefinition MergeIndexes = new OperationDefinition(Resource, "mergeIndexes");
-			public static readonly OperationDefinition SetPriority = new OperationDefinition(Resource, "setPriority");
-			public static readonly OperationDefinition Resign = new OperationDefinition(Resource, "resign");
+		public static readonly OperationDefinition StaticContent = new($"{Resource}/content", "read");
 
-			public static readonly OperationDefinition Login = new Operation(Resource, "login");
+		public static readonly OperationDefinition Shutdown = new(Resource, "shutdown");
+		public static readonly OperationDefinition ReloadConfiguration = new(Resource, "reloadConfiguration");
+		public static readonly OperationDefinition MergeIndexes = new(Resource, "mergeIndexes");
+		public static readonly OperationDefinition SetPriority = new(Resource, "setPriority");
+		public static readonly OperationDefinition Resign = new(Resource, "resign");
 
-			public static class Scavenge {
-				private const string Resource = Node.Resource + "/scavenge";
-				public static readonly OperationDefinition Start = new OperationDefinition(Resource, "start");
-				public static readonly OperationDefinition Stop = new OperationDefinition(Resource, "stop");
-				public static readonly OperationDefinition Read = new OperationDefinition(Resource, "read");
-			}
+		public static readonly OperationDefinition Login = new Operation(Resource, "login");
 
-			public static class Redaction {
-				private const string Resource = Node.Resource + "/redaction";
-				public static readonly OperationDefinition SwitchChunk = new OperationDefinition(Resource, "switchChunk");
-			}
-
-			public static class Information {
-				private const string Resource = Node.Resource + "/info";
-
-				public static readonly OperationDefinition Subsystems =
-					new OperationDefinition(Resource + "/subsystems", "read");
-
-				public static readonly OperationDefinition Histogram =
-					new OperationDefinition(Resource + "/histograms", "read");
-
-				public static readonly OperationDefinition Read = new OperationDefinition(Resource, "read");
-
-				public static readonly OperationDefinition Options =
-					new OperationDefinition(Resource + "/options", "read");
-			}
-
-			public static class Statistics {
-				private const string Resource = Node.Resource + "/stats";
-				public static readonly OperationDefinition Read = new OperationDefinition(Resource, "read");
-
-				public static readonly OperationDefinition Replication =
-					new OperationDefinition(Resource + "/replication", "read");
-
-				public static readonly OperationDefinition Tcp = new OperationDefinition(Resource + "/tcp", "read");
-
-				public static readonly OperationDefinition Custom =
-					new OperationDefinition(Resource + "/custom", "read");
-			}
-
-			public static class Elections {
-				private const string Resource = Node.Resource + "/elections";
-				public static readonly OperationDefinition ViewChange = new OperationDefinition(Resource, "viewchange");
-
-				public static readonly OperationDefinition ViewChangeProof =
-					new OperationDefinition(Resource, "viewchangeproof");
-
-				public static readonly OperationDefinition Prepare = new OperationDefinition(Resource, "prepare");
-				public static readonly OperationDefinition PrepareOk = new OperationDefinition(Resource, "prepareOk");
-				public static readonly OperationDefinition Proposal = new OperationDefinition(Resource, "proposal");
-				public static readonly OperationDefinition Accept = new OperationDefinition(Resource, "accept");
-
-				public static readonly OperationDefinition LeaderIsResigning =
-					new OperationDefinition(Resource, "leaderisresigning");
-
-				public static readonly OperationDefinition LeaderIsResigningOk =
-					new OperationDefinition(Resource, "leaderisresigningok");
-			}
-
-			public static class Gossip {
-				private const string Resource = Node.Resource + "/gossip";
-				public static readonly OperationDefinition Read = new OperationDefinition(Resource, "read");
-				public static readonly OperationDefinition Update = new OperationDefinition(Resource, "update");
-				public static readonly OperationDefinition ClientRead = new OperationDefinition(Resource + "/client", "read");
-			}
+		public static class Scavenge {
+			const string Resource = $"{Node.Resource}/scavenge";
+			public static readonly OperationDefinition Start = new(Resource, "start");
+			public static readonly OperationDefinition Stop = new(Resource, "stop");
+			public static readonly OperationDefinition Read = new(Resource, "read");
 		}
 
-		public static class Streams {
-			private const string Resource = "streams";
-			public static readonly OperationDefinition Read = new OperationDefinition(Resource, "read");
-			public static readonly OperationDefinition Write = new OperationDefinition(Resource, "write");
-			public static readonly OperationDefinition Delete = new OperationDefinition(Resource, "delete");
-			public static readonly OperationDefinition MetadataRead = new OperationDefinition(Resource, "metadataRead");
-
-			public static readonly OperationDefinition MetadataWrite =
-				new OperationDefinition(Resource, "metadataWrite");
-
-			public static class Parameters {
-				public static Parameter StreamId(string streamId) => new Parameter("streamId", streamId);
-
-				public static Parameter TransactionId(long transactionId) =>
-					new Parameter("transactionId", transactionId.ToString("D"));
-			}
+		public static class Redaction {
+			const string Resource = $"{Node.Resource}/redaction";
+			public static readonly OperationDefinition SwitchChunk = new(Resource, "switchChunk");
 		}
 
-		public static class Subscriptions {
-			private const string Resource = "subscriptions";
-			public static readonly OperationDefinition Statistics = new OperationDefinition(Resource, "statistics");
-			public static readonly OperationDefinition Create = new OperationDefinition(Resource, "create");
-			public static readonly OperationDefinition Update = new OperationDefinition(Resource, "update");
-			public static readonly OperationDefinition Delete = new OperationDefinition(Resource, "delete");
-			public static readonly OperationDefinition ReplayParked = new OperationDefinition(Resource, "replay");
-			public static readonly OperationDefinition Restart = new OperationDefinition(Resource, "restart");
+		public static class Information {
+			const string Resource = $"{Node.Resource}/info";
 
-			public static readonly OperationDefinition ProcessMessages = new OperationDefinition(Resource, "process");
+			public static readonly OperationDefinition Subsystems = new($"{Resource}/subsystems", "read");
 
+			public static readonly OperationDefinition Histogram = new($"{Resource}/histograms", "read");
 
-			public static class Parameters {
-				public static Parameter SubscriptionId(string id) => new Parameter("subscriptionId", id);
-				public static Parameter StreamId(string streamId) => new Parameter("streamId", streamId);
-			}
+			public static readonly OperationDefinition Read = new(Resource, "read");
+
+			public static readonly OperationDefinition Options = new($"{Resource}/options", "read");
 		}
 
-		public static class Users {
-			private const string Resource = "users";
-			public static readonly OperationDefinition Create = new OperationDefinition(Resource, "create");
-			public static readonly OperationDefinition Update = new OperationDefinition(Resource, "update");
-			public static readonly OperationDefinition Delete = new OperationDefinition(Resource, "delete");
-			public static readonly OperationDefinition List = new OperationDefinition(Resource, "list");
-			public static readonly OperationDefinition Read = new OperationDefinition(Resource, "read");
-			public static readonly OperationDefinition CurrentUser = new OperationDefinition(Resource, "self");
-			public static readonly OperationDefinition Enable = new OperationDefinition(Resource, "enable");
-			public static readonly OperationDefinition Disable = new OperationDefinition(Resource, "disable");
+		public static class Statistics {
+			const string Resource = $"{Node.Resource}/stats";
+			public static readonly OperationDefinition Read = new(Resource, "read");
 
-			public static readonly OperationDefinition ResetPassword =
-				new OperationDefinition(Resource, "resetPassword");
+			public static readonly OperationDefinition Replication = new($"{Resource}/replication", "read");
 
-			public static readonly OperationDefinition ChangePassword =
-				new OperationDefinition(Resource, "updatePassword");
+			public static readonly OperationDefinition Tcp = new($"{Resource}/tcp", "read");
 
-			public static class Parameters {
-				public const string UserParameterName = "user";
-
-				public static Parameter User(string userId) {
-					return new Parameter(UserParameterName, userId);
-				}
-			}
+			public static readonly OperationDefinition Custom = new($"{Resource}/custom", "read");
 		}
 
-		public static class Projections {
-			private const string Resource = "projections";
+		public static class Elections {
+			const string Resource = $"{Node.Resource}/elections";
+			public static readonly OperationDefinition ViewChange = new(Resource, "viewchange");
 
-			public static readonly OperationDefinition Create = new OperationDefinition(Resource, "create");
-			public static readonly OperationDefinition Update = new OperationDefinition(Resource, "update");
-			public static readonly OperationDefinition Read = new OperationDefinition(Resource, "read");
+			public static readonly OperationDefinition ViewChangeProof = new(Resource, "viewchangeproof");
 
-			public static readonly OperationDefinition Abort = new OperationDefinition(Resource, "abort");
+			public static readonly OperationDefinition Prepare = new(Resource, "prepare");
+			public static readonly OperationDefinition PrepareOk = new(Resource, "prepareOk");
+			public static readonly OperationDefinition Proposal = new(Resource, "proposal");
+			public static readonly OperationDefinition Accept = new(Resource, "accept");
 
-			public static readonly OperationDefinition List = new OperationDefinition(Resource, "list");
-			public static readonly OperationDefinition Restart = new OperationDefinition(Resource, "restart");
-			public static readonly OperationDefinition Delete = new OperationDefinition(Resource, "delete");
-			public static readonly OperationDefinition Enable = new OperationDefinition(Resource, "enable");
-			public static readonly OperationDefinition Disable = new OperationDefinition(Resource, "disable");
-			public static readonly OperationDefinition Reset = new OperationDefinition(Resource, "reset");
+			public static readonly OperationDefinition LeaderIsResigning = new(Resource, "leaderisresigning");
 
-			public static readonly OperationDefinition ReadConfiguration =
-				new OperationDefinition(Resource + "/configuration", "read");
+			public static readonly OperationDefinition LeaderIsResigningOk = new(Resource, "leaderisresigningok");
+		}
 
-			public static readonly OperationDefinition UpdateConfiguration =
-				new OperationDefinition(Resource + "/configuration", "update");
+		public static class Gossip {
+			const string Resource = $"{Node.Resource}/gossip";
+			public static readonly OperationDefinition Read = new(Resource, "read");
+			public static readonly OperationDefinition Update = new(Resource, "update");
+			public static readonly OperationDefinition ClientRead = new($"{Resource}/client", "read");
+		}
+	}
 
-			public static readonly OperationDefinition Status = new OperationDefinition(Resource, "status");
+	public static class Streams {
+		const string Resource = "streams";
+		public static readonly OperationDefinition Read = new(Resource, "read");
+		public static readonly OperationDefinition Write = new(Resource, "write");
+		public static readonly OperationDefinition Delete = new(Resource, "delete");
+		public static readonly OperationDefinition MetadataRead = new(Resource, "metadataRead");
 
-			//can be Partition based
-			public static readonly OperationDefinition State = new OperationDefinition(Resource, "state");
-			public static readonly OperationDefinition Result = new OperationDefinition(Resource, "state");
+		public static readonly OperationDefinition MetadataWrite = new(Resource, "metadataWrite");
 
-			public static readonly OperationDefinition Statistics = new OperationDefinition(Resource, "statistics");
+		public static class Parameters {
+			public static Parameter StreamId(string streamId) => new("streamId", streamId);
 
-			//This one is a bit weird
-			public static readonly OperationDefinition DebugProjection = new OperationDefinition(Resource, "debug");
+			public static Parameter TransactionId(long transactionId) => new("transactionId", transactionId.ToString("D"));
+		}
+	}
 
-			public static class Parameters {
-				public static readonly Parameter Query = new Parameter("projectionType", "query");
-				public static readonly Parameter OneTime = new Parameter("projectionType", "onetime");
-				public static readonly Parameter Continuous = new Parameter("projectionType", "continuous");
+	public static class Subscriptions {
+		const string Resource = "subscriptions";
+		public static readonly OperationDefinition Statistics = new(Resource, "statistics");
+		public static readonly OperationDefinition Create = new(Resource, "create");
+		public static readonly OperationDefinition Update = new(Resource, "update");
+		public static readonly OperationDefinition Delete = new(Resource, "delete");
+		public static readonly OperationDefinition ReplayParked = new(Resource, "replay");
+		public static readonly OperationDefinition Restart = new(Resource, "restart");
 
-				public static Parameter Projection(string name) {
-					return new Parameter("projection", name);
-				}
+		public static readonly OperationDefinition ProcessMessages = new(Resource, "process");
 
-				public static Parameter RunAs(string name) {
-					return new Parameter("runas", name);
-				}
-			}
+
+		public static class Parameters {
+			public static Parameter SubscriptionId(string id) => new("subscriptionId", id);
+
+			public static Parameter StreamId(string streamId) => new("streamId", streamId);
+		}
+	}
+
+	public static class Users {
+		const string Resource = "users";
+		public static readonly OperationDefinition Create = new(Resource, "create");
+		public static readonly OperationDefinition Update = new(Resource, "update");
+		public static readonly OperationDefinition Delete = new(Resource, "delete");
+		public static readonly OperationDefinition List = new(Resource, "list");
+		public static readonly OperationDefinition Read = new(Resource, "read");
+		public static readonly OperationDefinition CurrentUser = new(Resource, "self");
+		public static readonly OperationDefinition Enable = new(Resource, "enable");
+		public static readonly OperationDefinition Disable = new(Resource, "disable");
+
+		public static readonly OperationDefinition ResetPassword = new(Resource, "resetPassword");
+
+		public static readonly OperationDefinition ChangePassword = new(Resource, "updatePassword");
+
+		public static class Parameters {
+			public const string UserParameterName = "user";
+
+			public static Parameter User(string userId) => new(UserParameterName, userId);
+		}
+	}
+
+	public static class Projections {
+		const string Resource = "projections";
+
+		public static readonly OperationDefinition Create = new(Resource, "create");
+		public static readonly OperationDefinition Update = new(Resource, "update");
+		public static readonly OperationDefinition Read = new(Resource, "read");
+
+		public static readonly OperationDefinition Abort = new(Resource, "abort");
+
+		public static readonly OperationDefinition List = new(Resource, "list");
+		public static readonly OperationDefinition Restart = new(Resource, "restart");
+		public static readonly OperationDefinition Delete = new(Resource, "delete");
+		public static readonly OperationDefinition Enable = new(Resource, "enable");
+		public static readonly OperationDefinition Disable = new(Resource, "disable");
+		public static readonly OperationDefinition Reset = new(Resource, "reset");
+
+		public static readonly OperationDefinition ReadConfiguration = new($"{Resource}/configuration", "read");
+
+		public static readonly OperationDefinition UpdateConfiguration = new($"{Resource}/configuration", "update");
+
+		public static readonly OperationDefinition Status = new(Resource, "status");
+
+		//can be Partition based
+		public static readonly OperationDefinition State = new(Resource, "state");
+		public static readonly OperationDefinition Result = new(Resource, "state");
+
+		public static readonly OperationDefinition Statistics = new(Resource, "statistics");
+
+		//This one is a bit weird
+		public static readonly OperationDefinition DebugProjection = new(Resource, "debug");
+
+		public static class Parameters {
+			public static readonly Parameter Query = new("projectionType", "query");
+			public static readonly Parameter OneTime = new("projectionType", "onetime");
+			public static readonly Parameter Continuous = new("projectionType", "continuous");
+
+			public static Parameter Projection(string name) => new("projection", name);
+
+			public static Parameter RunAs(string name) => new("runas", name);
 		}
 	}
 }
