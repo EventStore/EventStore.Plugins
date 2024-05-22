@@ -50,7 +50,7 @@ public class PluginBaseTests {
 
 		using var app = builder.Build();
 
-		Action configure = () => plugin.Configure(app);
+		var configure = () => plugin.ConfigureApplication(app, EmptyConfiguration);
 
 		// Act & Assert
 		configure.Should().Throw<PluginLicenseException>().Which
@@ -75,7 +75,7 @@ public class PluginBaseTests {
 
 		using var app = builder.Build();
 
-		Action configure = () => plugin.Configure(app);
+		var configure = () => plugin.ConfigureApplication(app, EmptyConfiguration);
 
 		// Act & Assert
 		configure.Should().Throw<PluginLicenseException>().Which
@@ -99,7 +99,7 @@ public class PluginBaseTests {
 
 		using var app = builder.Build();
 
-		Action configure = () => plugin.Configure(app);
+		var configure = () => plugin.ConfigureApplication(app, builder.Configuration);
 
 		// Act & Assert
 		configure.Should().NotThrow<Exception>();

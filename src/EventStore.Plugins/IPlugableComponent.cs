@@ -43,13 +43,12 @@ public interface IPlugableComponent {
 	/// </summary>
 	/// <param name="services">The IServiceCollection to use for configuration.</param>
 	/// <param name="configuration">The IConfiguration to use for configuration.</param>
-	/// <returns>The configured IServiceCollection.</returns>
-	IServiceCollection ConfigureServices(IServiceCollection services, IConfiguration configuration);
+	void ConfigureServices(IServiceCollection services, IConfiguration configuration);
 
 	/// <summary>
 	///     Configures the application using the provided WebHostBuilderContext and IApplicationBuilder.
 	/// </summary>
 	/// <param name="builder">The IApplicationBuilder to use for configuration.</param>
-	/// <returns>The configured IApplicationBuilder.</returns>
-	IApplicationBuilder Configure(IApplicationBuilder builder);
+	/// <param name="configuration">The IConfiguration to use for configuration.</param>
+	void ConfigureApplication(IApplicationBuilder builder, IConfiguration configuration);
 }
