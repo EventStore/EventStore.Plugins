@@ -18,7 +18,7 @@ public class PluginMetricsTests {
 
 		using var app = builder.Build();
 
-		plugin.Configure(app);
+		plugin.ConfigureApplication(app, builder.Configuration);
 
 		using var collector = new MetricCollector<int>(
 			app.Services.GetRequiredService<IMeterFactory>(),

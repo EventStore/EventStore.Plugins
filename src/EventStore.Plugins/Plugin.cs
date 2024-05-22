@@ -84,17 +84,15 @@ public abstract class Plugin : IPlugableComponent, IDisposable {
 
 	public virtual (bool Enabled, string EnableInstructions) IsEnabled(IConfiguration configuration) => (true, "");
 
-	IServiceCollection IPlugableComponent.ConfigureServices(IServiceCollection services, IConfiguration configuration) {
+	void IPlugableComponent.ConfigureServices(IServiceCollection services, IConfiguration configuration) {
 		Configuration = configuration;
 		IsEnabledResult = IsEnabled(configuration);
 
 		if (Enabled)
 			ConfigureServices(services, configuration);
-
-		return services;
 	}
 
-	IApplicationBuilder IPlugableComponent.Configure(IApplicationBuilder app) {
+	void IPlugableComponent.ConfigureApplication(IApplicationBuilder app, IConfiguration configuration) {
 		PublishDiagnostics(new() { ["enabled"] = Enabled });
 
 		var logger = app.ApplicationServices.GetRequiredService<ILoggerFactory>().CreateLogger(GetType());
@@ -109,7 +107,7 @@ public abstract class Plugin : IPlugableComponent, IDisposable {
 				Version, IsEnabledResult.EnableInstructions
 			);
 
-			return app;
+			return;
 		}
 
 		logger.LogInformation("{Version} plugin enabled.", Version);
@@ -117,10 +115,14 @@ public abstract class Plugin : IPlugableComponent, IDisposable {
 		ConfigureApplication(app, Configuration);
 
 		PublishDiagnostics(new() { ["enabled"] = Enabled });
-
-		return app;
 	}
 
+	/// <summary>
+	///   Publishes diagnostics data.
+	///   Used for ESDB telemetry
+	/// </summary>
+	/// <param name="eventName">The name of the event to publish.</param>
+	/// <param name="eventData">The data to publish.</param>
 	protected internal void PublishDiagnostics(string eventName, Dictionary<string, object?> eventData) {
 		DiagnosticListener.Write(
 			nameof(PluginDiagnosticsData),
@@ -133,6 +135,11 @@ public abstract class Plugin : IPlugableComponent, IDisposable {
 		);
 	}
 
+	/// <summary>
+	///   Publishes diagnostics data.
+	///   Used for ESDB telemetry
+	/// </summary>
+	/// <param name="eventData">The data to publish.</param>
 	protected internal void PublishDiagnostics(Dictionary<string, object?> eventData) =>
 		PublishDiagnostics(nameof(PluginDiagnosticsData), eventData);
 
