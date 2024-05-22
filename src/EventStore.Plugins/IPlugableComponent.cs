@@ -34,6 +34,11 @@ public interface IPlugableComponent {
 	bool Enabled { get; }
 
 	/// <summary>
+	///		The public key used for licensing.
+	/// </summary>
+	string? LicensePublicKey { get; }
+	
+	/// <summary>
 	///     Configures the services using the provided IServiceCollection and IConfiguration.
 	/// </summary>
 	/// <param name="services">The IServiceCollection to use for configuration.</param>

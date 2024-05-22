@@ -55,7 +55,7 @@ public abstract class Plugin : IPlugableComponent, IDisposable {
 		options.DiagnosticsName,
 		options.DiagnosticsTags) { }
 
-	string? LicensePublicKey { get; }
+	public string? LicensePublicKey { get; }
 
 	DiagnosticListener DiagnosticListener { get; }
 
@@ -78,11 +78,11 @@ public abstract class Plugin : IPlugableComponent, IDisposable {
 	/// <inheritdoc />
 	public bool Enabled => IsEnabledResult.Enabled;
 
-	protected virtual void ConfigureServices(IServiceCollection services, IConfiguration configuration) { }
+	public virtual void ConfigureServices(IServiceCollection services, IConfiguration configuration) { }
 
-	protected virtual void ConfigureApplication(IApplicationBuilder app, IConfiguration configuration) { }
+	public virtual void ConfigureApplication(IApplicationBuilder app, IConfiguration configuration) { }
 
-	protected virtual (bool Enabled, string EnableInstructions) IsEnabled(IConfiguration configuration) => (true, "");
+	public virtual (bool Enabled, string EnableInstructions) IsEnabled(IConfiguration configuration) => (true, "");
 
 	IServiceCollection IPlugableComponent.ConfigureServices(IServiceCollection services, IConfiguration configuration) {
 		Configuration = configuration;
@@ -140,7 +140,5 @@ public abstract class Plugin : IPlugableComponent, IDisposable {
 		DiagnosticListener.Write(typeof(T).Name, pluginEvent);
 
 	/// <inheritdoc />
-	public void Dispose() {
-		DiagnosticListener.Dispose();
-	}
+	public void Dispose() => DiagnosticListener.Dispose();
 }
