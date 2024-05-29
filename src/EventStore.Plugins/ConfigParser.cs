@@ -3,7 +3,6 @@ using YamlDotNet.Serialization;
 
 namespace EventStore.Plugins;
 
-// move this to ComercialHA
 public static class ConfigParser {
     /// <summary>
     ///     Deserializes a section of configuration from a given config file into the provided settings type
