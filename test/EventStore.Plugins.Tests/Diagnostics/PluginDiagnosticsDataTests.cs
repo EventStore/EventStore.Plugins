@@ -1,5 +1,3 @@
-// ReSharper disable AccessToDisposedClosure
-
 using EventStore.Plugins.Diagnostics;
 
 namespace EventStore.Plugins.Tests.Diagnostics;
@@ -25,18 +23,16 @@ public class PluginDiagnosticsDataTests {
 	
 	static void gets_value_from_data<T>(T expectedValue) {
 		var sut = new PluginDiagnosticsData {
-			Source = "",
-			Data   = new() { ["value"] = expectedValue }
+			Data = new() { ["value"] = expectedValue }
 		};
 
 		sut.GetValue<T>("value").Should()
 			.BeEquivalentTo(expectedValue, $"because the retrieved value should be {typeof(T).Name}");
 	}
-	
+
 	static void gets_default_value_from_data<T>(T expectedValue) {
 		var sut = new PluginDiagnosticsData {
-			Source = "",
-			Data   = new()
+			Data = new()
 		};
 
 		sut.GetValue("missing-value", defaultValue: expectedValue)

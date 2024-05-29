@@ -25,12 +25,12 @@ public enum PluginDiagnosticsDataCollectionMode {
 ///     By default it is a snapshot and will override previously collected data, by event name.
 /// </summary>
 public readonly record struct PluginDiagnosticsData() : IComparable<PluginDiagnosticsData>, IComparable {
-	public static PluginDiagnosticsData None { get; } = new() { Source = null!, Data = null! };
-	
+	public static PluginDiagnosticsData None { get; } = new() { Data = null! };
+
 	/// <summary>
 	///		The source of the event that matches the DiagnosticsName.
 	/// </summary>
-	public required string Source { get; init; }
+	public string Source { get; init; } = string.Empty;
 	
 	/// <summary>
 	///		The name of the event. The default is PluginDiagnosticsData.
