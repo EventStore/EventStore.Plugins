@@ -22,7 +22,7 @@ public class PluginBaseTests {
 
 		plugin.Options.Should().BeEquivalentTo(expectedOptions);
 	}
-
+	
 	[Fact]
 	public void subsystems_plugin_base_sets_defaults_automatically() {
 		var expectedOptions = new SubsystemsPluginOptions {
@@ -36,7 +36,63 @@ public class PluginBaseTests {
 
 		plugin.Options.Should().BeEquivalentTo(expectedOptions);
 	}
+	
+	[Fact]
+	public void plugin_can_be_disabled_on_ConfigureApplication() {
+		// Arrange
+		IPlugableComponent plugin = new NightCityPlugin {
+			OnConfigureApplication = x => x.Disable("Disabled on ConfigureApplication because I can")
+		};
 
+		var builder = WebApplication.CreateBuilder();
+		
+		plugin.ConfigureServices(builder.Services, builder.Configuration);
+		
+		using var app = builder.Build();
+
+		// Act & Assert
+		plugin.Enabled.Should().BeTrue();
+		
+		plugin.ConfigureApplication(app, app.Configuration);
+		
+		plugin.Enabled.Should().BeFalse();
+		
+		plugin.LastDiagnosticsDataSnapshot
+			.Should().ContainKey("enabled")
+			.WhoseValue.Should().Be(false);
+	}
+	
+	[Fact]
+	public void plugin_diagnostics_snapshot_is_not_overriden_internally() {
+		// Arrange
+		var userDiagnosticsData = new Dictionary<string, object?> {
+			["first_value"]  = 1,
+			["second_value"] = 2
+		};
+		
+		IPlugableComponent plugin = new NightCityPlugin {
+			OnConfigureServices = x => x.PublishDiagnosticsData(userDiagnosticsData),
+			OnConfigureApplication = x => x.Disable("Disabled on ConfigureApplication because I can")
+		};
+
+		var builder = WebApplication.CreateBuilder();
+		
+		plugin.ConfigureServices(builder.Services, builder.Configuration);
+		
+		using var app = builder.Build();
+
+		// Act & Assert
+		
+		plugin.ConfigureApplication(app, app.Configuration);
+		
+		var expectedDiagnosticsData = new Dictionary<string, object?>(userDiagnosticsData) {
+			["enabled"] = false
+		};
+
+		plugin.LastDiagnosticsDataSnapshot
+			.Should().BeEquivalentTo(expectedDiagnosticsData);
+	}
+	
 	[Fact]
 	public void comercial_plugin_is_disabled_when_licence_is_missing() {
 		// Arrange
@@ -46,11 +102,11 @@ public class PluginBaseTests {
 
 		var builder = WebApplication.CreateBuilder();
 
-		plugin.ConfigureServices(builder.Services, EmptyConfiguration);
+		plugin.ConfigureServices(builder.Services, builder.Configuration);
 
 		using var app = builder.Build();
 
-		var configure = () => plugin.ConfigureApplication(app, EmptyConfiguration);
+		var configure = () => plugin.ConfigureApplication(app, app.Configuration);
 
 		// Act & Assert
 		configure.Should().Throw<PluginLicenseException>().Which
@@ -71,11 +127,11 @@ public class PluginBaseTests {
 
 		builder.Services.AddSingleton(license);
 
-		plugin.ConfigureServices(builder.Services, EmptyConfiguration);
+		plugin.ConfigureServices(builder.Services, builder.Configuration);
 
 		using var app = builder.Build();
 
-		var configure = () => plugin.ConfigureApplication(app, EmptyConfiguration);
+		var configure = () => plugin.ConfigureApplication(app, app.Configuration);
 
 		// Act & Assert
 		configure.Should().Throw<PluginLicenseException>().Which
@@ -104,7 +160,28 @@ public class PluginBaseTests {
 		// Act & Assert
 		configure.Should().NotThrow<Exception>();
 	}
+	
+	[Fact]
+	public void plugin_can_be_disabled_on_ConfigureServices() {
+		// Arrange
+		IPlugableComponent plugin = new NightCityPlugin {
+			OnConfigureServices = x => x.Disable("Disabled on ConfigureServices because I can")
+		};
 
+		var builder = WebApplication.CreateBuilder();
+
+		// Act & Assert
+		plugin.Enabled.Should().BeTrue();
+		
+		plugin.ConfigureServices(builder.Services, builder.Configuration);
+		
+		plugin.Enabled.Should().BeFalse();
+		
+		plugin.LastDiagnosticsDataSnapshot
+			.Should().ContainKey("enabled")
+			.WhoseValue.Should().Be(false);
+	}
+	
 	static (License License, string PublicKey) CreateLicense(Dictionary<string, object>? claims = null) {
 		using var rsa = RSA.Create(1024);
 
@@ -113,8 +190,6 @@ public class PluginBaseTests {
 
 		return (License.Create(publicKey, privateKey, claims), publicKey);
 	}
-
-	static readonly IConfiguration EmptyConfiguration = new ConfigurationBuilder().AddInMemoryCollection().Build();
 
 	class NightCityPlugin : Plugin {
 		public NightCityPlugin(PluginOptions options) : base(options) {
@@ -128,6 +203,15 @@ public class PluginBaseTests {
 		public NightCityPlugin() : this(new()) { }
 
 		public PluginOptions Options { get; }
+
+		public Action<Plugin>? OnConfigureServices    { get; set; }
+		public Action<Plugin>? OnConfigureApplication { get; set; }
+		
+		public override void ConfigureServices(IServiceCollection services, IConfiguration configuration) => 
+			OnConfigureServices?.Invoke(this);
+
+		public override void ConfigureApplication(IApplicationBuilder app, IConfiguration configuration) => 
+			OnConfigureApplication?.Invoke(this);
 	}
 
 	class PhantomLibertySubsystemsPlugin : SubsystemsPlugin {

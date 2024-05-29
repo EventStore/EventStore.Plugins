@@ -1,3 +1,5 @@
+// ReSharper disable AccessToDisposedClosure
+
 using EventStore.Plugins.Diagnostics;
 
 namespace EventStore.Plugins.Tests.Diagnostics;
@@ -9,22 +11,80 @@ public class PluginDiagnosticsDataCollectorTests {
 
 		using var sut = PluginDiagnosticsDataCollector.Start(plugin.DiagnosticsName);
 
-		plugin.PublishDiagnostics(new() { ["enabled"] = plugin.Enabled });
+		plugin.PublishDiagnosticsData(new() { ["enabled"] = plugin.Enabled });
 
-		sut.CollectedEvents.Should().ContainSingle().Which
+		sut.CollectedEvents(plugin.DiagnosticsName).Should().ContainSingle().Which
 			.Data["enabled"].Should().Be(plugin.Enabled);
 	}
-
+	
 	[Fact]
-	public void can_collect_diagnostics_data_from_subsystems_plugin() {
-		using var plugin = new TestSubsystemsPlugin(pluginName: Guid.NewGuid().ToString());
+	public void can_collect_diagnostics_data_from_multiple_plugins() {
+		using var pluginOne = new TestPlugin(pluginName: Guid.NewGuid().ToString());
+		using var pluginTwo = new TestPlugin(pluginName: Guid.NewGuid().ToString());
 
-		using var sut = PluginDiagnosticsDataCollector.Start(plugin.DiagnosticsName);
+		using var sut = PluginDiagnosticsDataCollector.Start(
+			pluginOne.DiagnosticsName, 
+			pluginTwo.DiagnosticsName
+		);
 
-		plugin.PublishDiagnostics(new() { ["enabled"] = plugin.Enabled });
+		pluginOne.PublishDiagnosticsData(new() { ["works"] = pluginOne.Enabled });
+		pluginTwo.PublishDiagnosticsData(new() { ["works"] = pluginTwo.Enabled });
 
-		sut.CollectedEvents.Should().ContainSingle().Which
-			.Data["enabled"].Should().Be(plugin.Enabled);
+		sut.CollectedEvents(pluginOne.DiagnosticsName).Should().ContainSingle().Which
+			.Data["works"].Should().Be(pluginOne.Enabled);
+		
+		sut.CollectedEvents(pluginTwo.DiagnosticsName).Should().ContainSingle().Which
+			.Data["works"].Should().Be(pluginTwo.Enabled);
+	}
+	
+	[Fact]
+	public void can_handle_diagnostics_data_from_multiple_plugins() {
+		using var pluginOne = new TestPlugin(pluginName: Guid.NewGuid().ToString());
+		using var pluginTwo = new TestPlugin(pluginName: Guid.NewGuid().ToString());
+
+		using var sut = PluginDiagnosticsDataCollector.Start(
+			data => {
+				data.Source.Should().BeOneOf(pluginOne.DiagnosticsName, pluginTwo.DiagnosticsName);
+				data.Data.TryGetValue("works", out var value).Should().BeTrue();
+			}, 
+			pluginOne.DiagnosticsName, 
+			pluginTwo.DiagnosticsName
+		);
+	}
+	
+	[Fact]
+	public void can_collect_diagnostics_data_from_multiple_subsystems_plugins() {
+		using var pluginOne = new TestSubsystemsPlugin(pluginName: Guid.NewGuid().ToString());
+		using var pluginTwo = new TestSubsystemsPlugin(pluginName: Guid.NewGuid().ToString());
+
+		using var sut = PluginDiagnosticsDataCollector.Start(
+			pluginOne.DiagnosticsName, 
+			pluginTwo.DiagnosticsName
+		);
+
+		pluginOne.PublishDiagnosticsData(new() { ["works"] = pluginOne.Enabled });
+		pluginTwo.PublishDiagnosticsData(new() { ["works"] = pluginTwo.Enabled });
+
+		sut.CollectedEvents(pluginOne.DiagnosticsName).Should().ContainSingle().Which
+			.Data["works"].Should().Be(pluginOne.Enabled);
+		
+		sut.CollectedEvents(pluginTwo.DiagnosticsName).Should().ContainSingle().Which
+			.Data["works"].Should().Be(pluginTwo.Enabled);
+	}
+	
+	[Fact]
+	public void can_handle_diagnostics_data_from_multiple_subsystems_plugins() {
+		using var pluginOne = new TestSubsystemsPlugin(pluginName: Guid.NewGuid().ToString());
+		using var pluginTwo = new TestSubsystemsPlugin(pluginName: Guid.NewGuid().ToString());
+
+		using var sut = PluginDiagnosticsDataCollector.Start(
+			data => {
+				data.Source.Should().BeOneOf(pluginOne.DiagnosticsName, pluginTwo.DiagnosticsName);
+				data.Data.TryGetValue("works", out var value).Should().BeTrue();
+			}, 
+			pluginOne.DiagnosticsName, 
+			pluginTwo.DiagnosticsName
+		);
 	}
 
 	class TestPlugin(string? pluginName = null) : Plugin(pluginName);
