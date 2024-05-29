@@ -20,10 +20,30 @@ public class PluginDiagnosticsDataCollector : IDisposable {
 				source,
 				static (_, state) => [state.PluginData],
 				static (_, collected, state) => {
-					if (state.PluginData.IsSnapshot)
-						collected.RemoveWhere(x => x.EventName == state.PluginData.EventName);
+					switch (state.PluginData.CollectionMode) {
+						case PluginDiagnosticsDataCollectionMode.Event:
+							collected.Add(state.PluginData);
+							break;
+						case PluginDiagnosticsDataCollectionMode.Snapshot:
+							collected.RemoveWhere(x => x.EventName == state.PluginData.EventName);
+							collected.Add(state.PluginData);
+							break;
+						case PluginDiagnosticsDataCollectionMode.Partial:
+							var events = collected.Where(x => x.EventName == state.PluginData.EventName).ToArray();
 
-					collected.Add(state.PluginData);
+							// if no event exists, create new
+							if (events.Length == 0)
+								collected.Add(state.PluginData);
+							else {
+								// update all collected events
+								foreach (var evt in events) {
+									foreach (var (key, value) in state.PluginData.Data)
+										evt.Data[key] = value;
+								}
+							}
+							
+							break;
+					}
 
 					if (collected.Count > state.Capacity)
 						collected.Remove(collected.Min);

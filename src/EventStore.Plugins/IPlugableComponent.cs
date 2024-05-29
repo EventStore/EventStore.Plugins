@@ -22,11 +22,6 @@ public interface IPlugableComponent {
 	///     The tags used for diagnostics.
 	/// </summary>
 	KeyValuePair<string, object?>[] DiagnosticsTags { get; }
-
-	/// <summary>
-	///		The last snapshot of diagnostics data published by the plugin.
-	/// </summary>
-	Dictionary<string, object?> LastDiagnosticsDataSnapshot { get; }
 	
 	/// <summary>
 	///     The version of the component.

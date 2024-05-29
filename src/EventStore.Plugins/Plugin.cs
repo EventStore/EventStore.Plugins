@@ -5,6 +5,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using static System.StringComparison;
+using static EventStore.Plugins.Diagnostics.PluginDiagnosticsDataCollectionMode;
 using License = EventStore.Plugins.Licensing.License;
 
 namespace EventStore.Plugins;
@@ -46,8 +47,6 @@ public abstract class Plugin : IPlugableComponent, IDisposable {
 
 		IsEnabledResult = (true, "");
 		Configuration = null!;
-
-		LastDiagnosticsDataSnapshot = new() { ["enabled"] = true };
 	}
 
 	protected Plugin(PluginOptions options) : this(
@@ -77,10 +76,10 @@ public abstract class Plugin : IPlugableComponent, IDisposable {
 	/// <inheritdoc />
 	public KeyValuePair<string, object?>[] DiagnosticsTags { get; }
 
-	/// <summary>
-	/// The last snapshot of diagnostics data published by the plugin.
-	/// </summary>
-	public Dictionary<string, object?> LastDiagnosticsDataSnapshot { get; private set; }
+	// /// <summary>
+	// /// The last snapshot of diagnostics data published by the plugin.
+	// /// </summary>
+	// public Dictionary<string, object?> LastDiagnosticsDataSnapshot { get; private set; }
 	
 	/// <inheritdoc />
 	public bool Enabled => IsEnabledResult.Enabled;
@@ -105,9 +104,7 @@ public abstract class Plugin : IPlugableComponent, IDisposable {
 		if (Enabled)
 			ConfigureServices(services, configuration);
 		
-		PublishDiagnosticsData(new(LastDiagnosticsDataSnapshot) {
-			["enabled"] = Enabled
-		});
+		PublishDiagnosticsData(new() { ["enabled"] = Enabled }, Partial);
 	}
 
 	void IPlugableComponent.ConfigureApplication(IApplicationBuilder app, IConfiguration configuration) {
@@ -130,9 +127,7 @@ public abstract class Plugin : IPlugableComponent, IDisposable {
 			
 			IsEnabledResult = (false, ex.Message);
 			
-			PublishDiagnosticsData(new(LastDiagnosticsDataSnapshot) {
-				["enabled"] = Enabled
-			});
+			PublishDiagnosticsData(new() { ["enabled"] = Enabled }, Partial);
 			
 			logger.LogInformation(
 				"{Version} plugin disabled. {EnableInstructions}",
@@ -157,9 +152,7 @@ public abstract class Plugin : IPlugableComponent, IDisposable {
 		}
 		
 		// finally publish diagnostics data
-		PublishDiagnosticsData(new(LastDiagnosticsDataSnapshot) {
-			["enabled"] = Enabled
-		});
+		PublishDiagnosticsData(new() { ["enabled"] = Enabled }, Partial);
 	}
 	
 	/// <summary>
@@ -169,18 +162,17 @@ public abstract class Plugin : IPlugableComponent, IDisposable {
 	///   Used for ESDB telemetry.
 	/// </summary>
 	/// <param name="eventData">The data to publish.</param>
-	protected internal void PublishDiagnosticsData(Dictionary<string, object?> eventData) {
+	/// <param name="mode">The mode of data collection for a plugin event.</param>
+	protected internal void PublishDiagnosticsData(Dictionary<string, object?> eventData, PluginDiagnosticsDataCollectionMode mode = Event) {
 		var value = new PluginDiagnosticsData {
 			Source = DiagnosticsName,
 			Data = eventData,
-			IsSnapshot = true
+			CollectionMode = mode
 		};
 		
 		DiagnosticListener.Write(nameof(PluginDiagnosticsData), value);
-		
-		LastDiagnosticsDataSnapshot = value.Data;
 	}
-	
+
 	/// <summary>
 	///   Publishes diagnostics data. <br/>
 	///   Uses the same <see cref="PluginDiagnosticsData"/> container as snapshot diagnostics. <br/>
@@ -188,8 +180,8 @@ public abstract class Plugin : IPlugableComponent, IDisposable {
 	/// </summary>
 	/// <param name="eventName">The name of the event to publish.</param>
 	/// <param name="eventData">The data to publish.</param>
-	/// <param name="isSnapshot">Whether the event is a snapshot and should override previously collected data, by event name.</param>
-	protected internal void PublishDiagnosticsData(string eventName, Dictionary<string, object?> eventData, bool isSnapshot = false) {
+	/// <param name="mode">The mode of data collection for a plugin event.</param>
+	protected internal void PublishDiagnosticsData(string eventName, Dictionary<string, object?> eventData, PluginDiagnosticsDataCollectionMode mode = Event) {
 		if (eventName == nameof(PluginDiagnosticsData)) 
 		    throw new ArgumentException("Event name cannot be PluginDiagnosticsData", nameof(eventName));
 		
@@ -199,7 +191,7 @@ public abstract class Plugin : IPlugableComponent, IDisposable {
 				Source = DiagnosticsName,
 				EventName = eventName,
 				Data = eventData,
-				IsSnapshot = isSnapshot
+				CollectionMode = mode
 			}
 		);
 	}

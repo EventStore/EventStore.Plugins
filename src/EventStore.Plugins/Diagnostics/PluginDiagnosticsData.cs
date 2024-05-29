@@ -1,10 +1,32 @@
 namespace EventStore.Plugins.Diagnostics;
 
 /// <summary>
+///		Represents the mode of data collection for a plugin event.
+/// </summary>
+public enum PluginDiagnosticsDataCollectionMode {
+	/// <summary>
+	///		Appends multiple events regardless or their type.
+	/// </summary>
+	Event,
+	
+	/// <summary>
+	///		Override previously collected event data.
+	/// </summary>
+	Snapshot,
+	
+	/// <summary>
+	///		Merges with previously collected event data.
+	/// </summary>
+	Partial
+}
+
+/// <summary>
 ///     Represents diagnostic data of a plugin.
 ///     By default it is a snapshot and will override previously collected data, by event name.
 /// </summary>
 public readonly record struct PluginDiagnosticsData() : IComparable<PluginDiagnosticsData>, IComparable {
+	public static PluginDiagnosticsData None { get; } = new() { Source = null!, Data = null! };
+	
 	/// <summary>
 	///		The source of the event that matches the DiagnosticsName.
 	/// </summary>
@@ -26,9 +48,9 @@ public readonly record struct PluginDiagnosticsData() : IComparable<PluginDiagno
 	public DateTimeOffset Timestamp { get; init; } = DateTimeOffset.UtcNow;
 	
 	/// <summary>
-	///		Whether the event is a snapshot and should override previously collected data, by event name. Default value is true.
+	///		Represents the mode of data collection for a plugin event.
 	/// </summary>
-	public bool IsSnapshot { get; init; } = false;
+	public PluginDiagnosticsDataCollectionMode CollectionMode { get; init; } = PluginDiagnosticsDataCollectionMode.Event;
 	
 	/// <summary>
 	///		Gets the value associated with the specified key.

@@ -1,6 +1,7 @@
 // ReSharper disable AccessToDisposedClosure
 
 using System.Security.Cryptography;
+using EventStore.Plugins.Diagnostics;
 using EventStore.Plugins.Licensing;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.Configuration;
@@ -38,31 +39,6 @@ public class PluginBaseTests {
 	}
 	
 	[Fact]
-	public void plugin_can_be_disabled_on_ConfigureApplication() {
-		// Arrange
-		IPlugableComponent plugin = new NightCityPlugin {
-			OnConfigureApplication = x => x.Disable("Disabled on ConfigureApplication because I can")
-		};
-
-		var builder = WebApplication.CreateBuilder();
-		
-		plugin.ConfigureServices(builder.Services, builder.Configuration);
-		
-		using var app = builder.Build();
-
-		// Act & Assert
-		plugin.Enabled.Should().BeTrue();
-		
-		plugin.ConfigureApplication(app, app.Configuration);
-		
-		plugin.Enabled.Should().BeFalse();
-		
-		plugin.LastDiagnosticsDataSnapshot
-			.Should().ContainKey("enabled")
-			.WhoseValue.Should().Be(false);
-	}
-	
-	[Fact]
 	public void plugin_diagnostics_snapshot_is_not_overriden_internally() {
 		// Arrange
 		var userDiagnosticsData = new Dictionary<string, object?> {
@@ -70,10 +46,12 @@ public class PluginBaseTests {
 			["second_value"] = 2
 		};
 		
-		IPlugableComponent plugin = new NightCityPlugin {
+		IPlugableComponent plugin = new NightCityPlugin(new(){ Name = Guid.NewGuid().ToString() }) {
 			OnConfigureServices = x => x.PublishDiagnosticsData(userDiagnosticsData),
 			OnConfigureApplication = x => x.Disable("Disabled on ConfigureApplication because I can")
 		};
+		
+		using var collector = PluginDiagnosticsDataCollector.Start(plugin.DiagnosticsName);
 
 		var builder = WebApplication.CreateBuilder();
 		
@@ -82,15 +60,14 @@ public class PluginBaseTests {
 		using var app = builder.Build();
 
 		// Act & Assert
-		
 		plugin.ConfigureApplication(app, app.Configuration);
 		
 		var expectedDiagnosticsData = new Dictionary<string, object?>(userDiagnosticsData) {
 			["enabled"] = false
 		};
 
-		plugin.LastDiagnosticsDataSnapshot
-			.Should().BeEquivalentTo(expectedDiagnosticsData);
+		collector.CollectedEvents(plugin.DiagnosticsName).Should().ContainSingle()
+			.Which.Data.Should().BeEquivalentTo(expectedDiagnosticsData);
 	}
 	
 	[Fact]
@@ -164,9 +141,11 @@ public class PluginBaseTests {
 	[Fact]
 	public void plugin_can_be_disabled_on_ConfigureServices() {
 		// Arrange
-		IPlugableComponent plugin = new NightCityPlugin {
+		IPlugableComponent plugin = new NightCityPlugin() {
 			OnConfigureServices = x => x.Disable("Disabled on ConfigureServices because I can")
 		};
+		
+		using var collector = PluginDiagnosticsDataCollector.Start(plugin.DiagnosticsName);
 
 		var builder = WebApplication.CreateBuilder();
 
@@ -177,11 +156,38 @@ public class PluginBaseTests {
 		
 		plugin.Enabled.Should().BeFalse();
 		
-		plugin.LastDiagnosticsDataSnapshot
-			.Should().ContainKey("enabled")
-			.WhoseValue.Should().Be(false);
+		collector.CollectedEvents(plugin.DiagnosticsName).Should().ContainSingle()
+			.Which.Data.Should().ContainKey("enabled")
+			.WhoseValue.Should().BeEquivalentTo(false);
 	}
-	
+
+	[Fact]
+	public void plugin_can_be_disabled_on_ConfigureApplication() {
+		// Arrange
+		IPlugableComponent plugin = new NightCityPlugin() {
+			OnConfigureApplication = x => x.Disable("Disabled on ConfigureApplication because I can")
+		};
+		
+		using var collector = PluginDiagnosticsDataCollector.Start(plugin.DiagnosticsName);
+
+		var builder = WebApplication.CreateBuilder();
+		
+		plugin.ConfigureServices(builder.Services, builder.Configuration);
+		
+		using var app = builder.Build();
+
+		// Act & Assert
+		plugin.Enabled.Should().BeTrue();
+		
+		plugin.ConfigureApplication(app, app.Configuration);
+		
+		plugin.Enabled.Should().BeFalse();
+		
+		collector.CollectedEvents(plugin.DiagnosticsName).Should().ContainSingle()
+			.Which.Data.Should().ContainKey("enabled")
+			.WhoseValue.Should().BeEquivalentTo(false);
+	}
+
 	static (License License, string PublicKey) CreateLicense(Dictionary<string, object>? claims = null) {
 		using var rsa = RSA.Create(1024);
 
@@ -200,7 +206,7 @@ public class PluginBaseTests {
 			};
 		}
 
-		public NightCityPlugin() : this(new()) { }
+		public NightCityPlugin() : this(new(){ Name = Guid.NewGuid().ToString() }) { }
 
 		public PluginOptions Options { get; }
 
