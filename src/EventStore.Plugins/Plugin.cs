@@ -75,11 +75,6 @@ public abstract class Plugin : IPlugableComponent, IDisposable {
 
 	/// <inheritdoc />
 	public KeyValuePair<string, object?>[] DiagnosticsTags { get; }
-
-	// /// <summary>
-	// /// The last snapshot of diagnostics data published by the plugin.
-	// /// </summary>
-	// public Dictionary<string, object?> LastDiagnosticsDataSnapshot { get; private set; }
 	
 	/// <inheritdoc />
 	public bool Enabled => IsEnabledResult.Enabled;
@@ -89,8 +84,8 @@ public abstract class Plugin : IPlugableComponent, IDisposable {
 	public virtual void ConfigureApplication(IApplicationBuilder app, IConfiguration configuration) { }
 
 	/// <summary>
-	/// This check will happen before the plugin is configured and returns true by default.<br/>
-	/// Nonetheless the plugin can still be disabled by calling <see cref="Disable"/> on ConfigureServices and ConfigureApplication.
+	///		This check will happen before the plugin is configured and returns true by default.<br/>
+	///		Nonetheless the plugin can still be disabled by calling <see cref="Disable"/> on ConfigureServices and ConfigureApplication.
 	/// </summary>
 	/// <param name="configuration">The configuration of the application.<br/></param>
 	public virtual (bool Enabled, string EnableInstructions) IsEnabled(IConfiguration configuration) => IsEnabledResult;
@@ -163,7 +158,7 @@ public abstract class Plugin : IPlugableComponent, IDisposable {
 	/// </summary>
 	/// <param name="eventData">The data to publish.</param>
 	/// <param name="mode">The mode of data collection for a plugin event.</param>
-	protected internal void PublishDiagnosticsData(Dictionary<string, object?> eventData, PluginDiagnosticsDataCollectionMode mode = Event) {
+	protected internal void PublishDiagnosticsData(Dictionary<string, object?> eventData, PluginDiagnosticsDataCollectionMode mode = Partial) {
 		var value = new PluginDiagnosticsData {
 			Source = DiagnosticsName,
 			Data = eventData,
@@ -197,7 +192,7 @@ public abstract class Plugin : IPlugableComponent, IDisposable {
 	}
 	
 	/// <summary>
-	///  Publishes diagnostics events. <br/>
+	///		Publishes diagnostics events. <br/>
 	/// </summary>
 	/// <param name="pluginEvent"></param>
 	/// <typeparam name="T"></typeparam>
