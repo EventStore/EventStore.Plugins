@@ -141,7 +141,7 @@ public class PluginBaseTests {
 	[Fact]
 	public void plugin_can_be_disabled_on_ConfigureServices() {
 		// Arrange
-		IPlugableComponent plugin = new NightCityPlugin() {
+		IPlugableComponent plugin = new NightCityPlugin(new(){ Name = Guid.NewGuid().ToString() }) {
 			OnConfigureServices = x => x.Disable("Disabled on ConfigureServices because I can")
 		};
 		
@@ -164,7 +164,7 @@ public class PluginBaseTests {
 	[Fact]
 	public void plugin_can_be_disabled_on_ConfigureApplication() {
 		// Arrange
-		IPlugableComponent plugin = new NightCityPlugin() {
+		IPlugableComponent plugin = new NightCityPlugin(new(){ Name = Guid.NewGuid().ToString() }) {
 			OnConfigureApplication = x => x.Disable("Disabled on ConfigureApplication because I can")
 		};
 		
@@ -206,7 +206,7 @@ public class PluginBaseTests {
 			};
 		}
 
-		public NightCityPlugin() : this(new(){ Name = Guid.NewGuid().ToString() }) { }
+		public NightCityPlugin() : this(new()) { }
 
 		public PluginOptions Options { get; }
 
