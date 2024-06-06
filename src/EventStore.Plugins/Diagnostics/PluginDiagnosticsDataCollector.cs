@@ -13,9 +13,9 @@ public delegate void OnEventCollected(PluginDiagnosticsData diagnosticsData);
 [PublicAPI]
 public class PluginDiagnosticsDataCollector : IDisposable {
 	public PluginDiagnosticsDataCollector(string[] sources, int capacity = 10, OnEventCollected? onEventCollected = null) {
-		Listener = new(sources, 0, (source, data) => {
+		Listener = new(sources, capacity, (source, data) => {
 			if (data is not PluginDiagnosticsData pluginData) return;
-			
+
 			CollectedEventsByPlugin.AddOrUpdate(
 				source,
 				static (_, state) => [state.PluginData],
@@ -41,13 +41,13 @@ public class PluginDiagnosticsDataCollector : IDisposable {
 										evt.Data[key] = value;
 								}
 							}
-							
+
 							break;
 					}
 
 					if (collected.Count > state.Capacity)
 						collected.Remove(collected.Min);
-					
+
 					return collected;
 				},
 				(PluginData: pluginData, Capacity: capacity)
@@ -63,7 +63,7 @@ public class PluginDiagnosticsDataCollector : IDisposable {
 	}
 
 	MultiSourceDiagnosticsListener Listener { get; }
-	
+
 	ConcurrentDictionary<string, SortedSet<PluginDiagnosticsData>> CollectedEventsByPlugin { get; } = new();
 
 	public IEnumerable<PluginDiagnosticsData> CollectedEvents(string source) =>
@@ -76,7 +76,7 @@ public class PluginDiagnosticsDataCollector : IDisposable {
 		if (CollectedEventsByPlugin.TryGetValue(source, out var data))
 			data.Clear();
 	}
-	
+
 	public void ClearAllCollectedEvents() {
 		foreach (var data in CollectedEventsByPlugin.Values)
 			data.Clear();
@@ -86,7 +86,7 @@ public class PluginDiagnosticsDataCollector : IDisposable {
 		Listener.Dispose();
 		CollectedEventsByPlugin.Clear();
 	}
-	
+
 	/// <summary>
 	///     Starts the <see cref="PluginDiagnosticsDataCollector" /> with the specified delegate and sources.
 	///     This method is a convenient way to create a new instance of the <see cref="PluginDiagnosticsDataCollector" /> and start collecting data immediately.
@@ -95,7 +95,7 @@ public class PluginDiagnosticsDataCollector : IDisposable {
 	/// <param name="sources">The plugin diagnostic names to collect diagnostics data from.</param>
 	public static PluginDiagnosticsDataCollector Start(OnEventCollected onEventCollected, params string[] sources) =>
 			new(sources, 10, onEventCollected);
-	
+
 	/// <summary>
 	///     Starts the <see cref="PluginDiagnosticsDataCollector" /> with the specified delegate and sources.
 	///     This method is a convenient way to create a new instance of the <see cref="PluginDiagnosticsDataCollector" /> and start collecting data immediately.
