@@ -1,5 +1,4 @@
 using System.Collections.Concurrent;
-using System.Diagnostics;
 
 namespace EventStore.Plugins.Diagnostics;
 
@@ -12,92 +11,100 @@ public delegate void OnEventCollected(PluginDiagnosticsData diagnosticsData);
 ///     Component to collect diagnostics data from plugins. More specifically <see cref="PluginDiagnosticsData" /> events.
 /// </summary>
 [PublicAPI]
-public class PluginDiagnosticsDataCollector : IObserver<DiagnosticListener>, IObserver<KeyValuePair<string, object?>>, IDisposable {
-	/// <summary>
-	///     Creates a new instance of <see cref="PluginDiagnosticsDataCollector" />.
-	/// </summary>
-	/// <param name="onEventCollected">
-	///     A delegate to handle <see cref="PluginDiagnosticsData" /> events.
-	/// </param>
-	/// <param name="sources">
-	///     The plugin diagnostic names to collect diagnostics data from.
-	/// </param>
-	public PluginDiagnosticsDataCollector(OnEventCollected onEventCollected, params string[] sources) {
-		OnEventCollected = onEventCollected;
-		Sources = [..sources];
+public class PluginDiagnosticsDataCollector : IDisposable {
+	public PluginDiagnosticsDataCollector(string[] sources, int capacity = 10, OnEventCollected? onEventCollected = null) {
+		Listener = new(sources, capacity, (source, data) => {
+			if (data is not PluginDiagnosticsData pluginData) return;
 
-		if (sources.Length > 0)
-			DiagnosticListener.AllListeners.Subscribe(this);
+			CollectedEventsByPlugin.AddOrUpdate(
+				source,
+				static (_, state) => [state.PluginData],
+				static (_, collected, state) => {
+					switch (state.PluginData.CollectionMode) {
+						case PluginDiagnosticsDataCollectionMode.Event:
+							collected.Add(state.PluginData);
+							break;
+						case PluginDiagnosticsDataCollectionMode.Snapshot:
+							collected.RemoveWhere(x => x.EventName == state.PluginData.EventName);
+							collected.Add(state.PluginData);
+							break;
+						case PluginDiagnosticsDataCollectionMode.Partial:
+							var events = collected.Where(x => x.EventName == state.PluginData.EventName).ToArray();
+
+							// if no event exists, create new
+							if (events.Length == 0)
+								collected.Add(state.PluginData);
+							else {
+								// update all collected events
+								foreach (var evt in events) {
+									foreach (var (key, value) in state.PluginData.Data)
+										evt.Data[key] = value;
+								}
+							}
+
+							break;
+					}
+
+					if (collected.Count > state.Capacity)
+						collected.Remove(collected.Min);
+
+					return collected;
+				},
+				(PluginData: pluginData, Capacity: capacity)
+			);
+
+			try {
+				onEventCollected?.Invoke(pluginData);
+			}
+			catch (Exception) {
+				// stay on target
+			}
+		});
 	}
 
-	/// <summary>
-	///     Creates a new instance of <see cref="PluginDiagnosticsDataCollector" />.
-	/// </summary>
-	/// <param name="sources">
-	///     The plugin diagnostic names to collect diagnostics data from.
-	/// </param>
-	public PluginDiagnosticsDataCollector(params string[] sources) : this(static _ => { }, sources) { }
+	MultiSourceDiagnosticsListener Listener { get; }
 
-	ConcurrentDictionary<string, PluginDiagnosticsData> CollectedEventsByPlugin { get; } = new();
-	OnEventCollected OnEventCollected { get; }
-	List<string> Sources { get; }
-	List<IDisposable> Subscriptions { get; } = [];
+	ConcurrentDictionary<string, SortedSet<PluginDiagnosticsData>> CollectedEventsByPlugin { get; } = new();
 
-	/// <summary>
-	///		The collected <see cref="PluginDiagnosticsData" /> events.
-	/// </summary>
-	public ICollection<PluginDiagnosticsData> CollectedEvents => CollectedEventsByPlugin.Values.ToArray();
+	public IEnumerable<PluginDiagnosticsData> CollectedEvents(string source) =>
+		CollectedEventsByPlugin.TryGetValue(source, out var data) ? data : Array.Empty<PluginDiagnosticsData>();
 
-	void IObserver<DiagnosticListener>.OnNext(DiagnosticListener value) {
-		// if (Sources.Contains(value.Name) && value.IsEnabled(value.Name)) 
-		if (Sources.Contains(value.Name))
-			Subscriptions.Add(value.Subscribe(this));
+	public bool HasCollectedEvents(string source) =>
+		CollectedEventsByPlugin.TryGetValue(source, out var data) && data.Count > 0;
+
+	public void ClearCollectedEvents(string source) {
+		if (CollectedEventsByPlugin.TryGetValue(source, out var data))
+			data.Clear();
 	}
 
-	void IObserver<KeyValuePair<string, object?>>.OnNext(KeyValuePair<string, object?> value) {
-		if (value.Key != nameof(PluginDiagnosticsData) || value.Value is not PluginDiagnosticsData pluginEvent) return;
-
-		CollectedEventsByPlugin.AddOrUpdate(
-			pluginEvent.Source,
-			static (_, pluginEvent) => pluginEvent,
-			static (_, _, pluginEvent) => pluginEvent,
-			pluginEvent
-		);
-
-		try {
-			OnEventCollected(pluginEvent);
-		}
-		catch (Exception) {
-			// stay on target
-		}
+	public void ClearAllCollectedEvents() {
+		foreach (var data in CollectedEventsByPlugin.Values)
+			data.Clear();
 	}
 
-	void IObserver<DiagnosticListener>.OnCompleted() { }
-
-	void IObserver<KeyValuePair<string, object?>>.OnCompleted() { }
-
-	void IObserver<DiagnosticListener>.OnError(Exception error) { }
-
-	void IObserver<KeyValuePair<string, object?>>.OnError(Exception error) { }
-
-	/// <inheritdoc />
 	public void Dispose() {
-		foreach (var subscription in Subscriptions)
-			subscription.Dispose();
+		Listener.Dispose();
+		CollectedEventsByPlugin.Clear();
 	}
 
 	/// <summary>
 	///     Starts the <see cref="PluginDiagnosticsDataCollector" /> with the specified delegate and sources.
 	///     This method is a convenient way to create a new instance of the <see cref="PluginDiagnosticsDataCollector" /> and start collecting data immediately.
 	/// </summary>
-	/// <param name="onEventCollected">
-	///     A delegate to handle <see cref="PluginDiagnosticsData" /> events.
-	/// </param>
-	/// <param name="sources">
-	///     The plugin diagnostic names to collect diagnostics data from.
-	/// </param>
+	/// <param name="onEventCollected">A delegate to handle <see cref="PluginDiagnosticsData" /> events.</param>
+	/// <param name="sources">The plugin diagnostic names to collect diagnostics data from.</param>
 	public static PluginDiagnosticsDataCollector Start(OnEventCollected onEventCollected, params string[] sources) =>
-		new(onEventCollected, sources);
+			new(sources, 10, onEventCollected);
+
+	/// <summary>
+	///     Starts the <see cref="PluginDiagnosticsDataCollector" /> with the specified delegate and sources.
+	///     This method is a convenient way to create a new instance of the <see cref="PluginDiagnosticsDataCollector" /> and start collecting data immediately.
+	/// </summary>
+	/// <param name="onEventCollected">A delegate to handle <see cref="PluginDiagnosticsData" /> events.</param>
+	/// <param name="capacity">The maximum number of diagnostics data to collect per source.</param>
+	/// <param name="sources">The plugin diagnostic names to collect diagnostics data from.</param>
+	public static PluginDiagnosticsDataCollector Start(OnEventCollected onEventCollected, int capacity, params string[] sources) =>
+		new(sources, capacity, onEventCollected);
 
 	/// <summary>
 	///     Starts the <see cref="PluginDiagnosticsDataCollector" /> with the specified sources.
@@ -106,6 +113,13 @@ public class PluginDiagnosticsDataCollector : IObserver<DiagnosticListener>, IOb
 	/// <param name="sources">
 	///     The plugin diagnostic names to collect diagnostics data from.
 	/// </param>
-	public static PluginDiagnosticsDataCollector Start(params string[] sources) =>
-		new(sources);
+	public static PluginDiagnosticsDataCollector Start(params string[] sources) => new(sources);
+
+	/// <summary>
+	///     Starts the <see cref="PluginDiagnosticsDataCollector" /> with the specified sources.
+	///     This method is a convenient way to create a new instance of the <see cref="PluginDiagnosticsDataCollector" /> and start collecting data immediately.
+	/// </summary>
+	/// <param name="capacity">The maximum number of diagnostics data to collect per source.</param>
+	/// <param name="sources">The plugin diagnostic names to collect diagnostics data from.</param>
+	public static PluginDiagnosticsDataCollector Start(int capacity, params string[] sources) => new(sources, capacity);
 }

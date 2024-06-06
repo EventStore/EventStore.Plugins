@@ -22,7 +22,7 @@ public interface IPlugableComponent {
 	///     The tags used for diagnostics.
 	/// </summary>
 	KeyValuePair<string, object?>[] DiagnosticsTags { get; }
-
+	
 	/// <summary>
 	///     The version of the component.
 	/// </summary>

@@ -5,6 +5,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using static System.StringComparison;
+using static EventStore.Plugins.Diagnostics.PluginDiagnosticsDataCollectionMode;
 using License = EventStore.Plugins.Licensing.License;
 
 namespace EventStore.Plugins;
@@ -44,7 +45,7 @@ public abstract class Plugin : IPlugableComponent, IDisposable {
 
 		DiagnosticListener = new(DiagnosticsName);
 
-		IsEnabledResult = (false, "");
+		IsEnabledResult = (true, "");
 		Configuration = null!;
 	}
 
@@ -74,7 +75,7 @@ public abstract class Plugin : IPlugableComponent, IDisposable {
 
 	/// <inheritdoc />
 	public KeyValuePair<string, object?>[] DiagnosticsTags { get; }
-
+	
 	/// <inheritdoc />
 	public bool Enabled => IsEnabledResult.Enabled;
 
@@ -82,25 +83,29 @@ public abstract class Plugin : IPlugableComponent, IDisposable {
 
 	public virtual void ConfigureApplication(IApplicationBuilder app, IConfiguration configuration) { }
 
-	public virtual (bool Enabled, string EnableInstructions) IsEnabled(IConfiguration configuration) => (true, "");
-
+	/// <summary>
+	///		This check will happen before the plugin is configured and returns true by default.<br/>
+	///		Nonetheless the plugin can still be disabled by calling <see cref="Disable"/> on ConfigureServices and ConfigureApplication.
+	/// </summary>
+	/// <param name="configuration">The configuration of the application.<br/></param>
+	public virtual (bool Enabled, string EnableInstructions) IsEnabled(IConfiguration configuration) => IsEnabledResult;
+	
+	public void Disable(string reason) => IsEnabledResult = (false, reason);
+	
 	void IPlugableComponent.ConfigureServices(IServiceCollection services, IConfiguration configuration) {
 		Configuration = configuration;
 		IsEnabledResult = IsEnabled(configuration);
-
+		
 		if (Enabled)
 			ConfigureServices(services, configuration);
+		
+		PublishDiagnosticsData(new() { ["enabled"] = Enabled }, Partial);
 	}
 
 	void IPlugableComponent.ConfigureApplication(IApplicationBuilder app, IConfiguration configuration) {
-		PublishDiagnostics(new() { ["enabled"] = Enabled });
-
 		var logger = app.ApplicationServices.GetRequiredService<ILoggerFactory>().CreateLogger(GetType());
-
-		var license = app.ApplicationServices.GetService<License>();
-		if (Enabled && LicensePublicKey is not null && (license is null || !license.IsValid(LicensePublicKey)))
-			throw new PluginLicenseException(Name);
-
+		
+		// if the plugin is disabled, just get out
 		if (!Enabled) {
 			logger.LogInformation(
 				"{Version} plugin disabled. {EnableInstructions}",
@@ -109,40 +114,88 @@ public abstract class Plugin : IPlugableComponent, IDisposable {
 
 			return;
 		}
-
-		logger.LogInformation("{Version} plugin enabled.", Version);
-
+		
+		// if the plugin is enabled, but the license is invalid, throw an exception and effectivly disable the plugin
+		var license = app.ApplicationServices.GetService<License>();
+		if (Enabled && LicensePublicKey is not null && (license is null || !license.IsValid(LicensePublicKey))) {
+			var ex = new PluginLicenseException(Name);
+			
+			IsEnabledResult = (false, ex.Message);
+			
+			PublishDiagnosticsData(new() { ["enabled"] = Enabled }, Partial);
+			
+			logger.LogInformation(
+				"{Version} plugin disabled. {EnableInstructions}",
+				Version, IsEnabledResult.EnableInstructions
+			);
+			
+			throw ex;
+		}
+		
+		// there is still a chance to disable the plugin when configuring the application
+		// this is useful when the plugin is enabled, but some conditions that can only be checked here are not met
 		ConfigureApplication(app, Configuration);
 
-		PublishDiagnostics(new() { ["enabled"] = Enabled });
+		// at this point we know if the plugin is enabled and configured or not
+		if (Enabled)
+			logger.LogInformation("{Version} plugin enabled.", Version);
+		else {
+			logger.LogInformation(
+				"{Version} plugin disabled. {EnableInstructions}",
+				Version, IsEnabledResult.EnableInstructions
+			);
+		}
+		
+		// finally publish diagnostics data
+		PublishDiagnosticsData(new() { ["enabled"] = Enabled }, Partial);
+	}
+	
+	/// <summary>
+	///   Publishes diagnostics data as a snapshot.<br/>
+	///   Uses the <see cref="PluginDiagnosticsData"/> container.<br/>
+	///   Multiple calls to this method will overwrite the previous snapshot.<br/>
+	///   Used for ESDB telemetry.
+	/// </summary>
+	/// <param name="eventData">The data to publish.</param>
+	/// <param name="mode">The mode of data collection for a plugin event.</param>
+	protected internal void PublishDiagnosticsData(Dictionary<string, object?> eventData, PluginDiagnosticsDataCollectionMode mode = Partial) {
+		var value = new PluginDiagnosticsData {
+			Source = DiagnosticsName,
+			Data = eventData,
+			CollectionMode = mode
+		};
+		
+		DiagnosticListener.Write(nameof(PluginDiagnosticsData), value);
 	}
 
 	/// <summary>
-	///   Publishes diagnostics data.
-	///   Used for ESDB telemetry
+	///   Publishes diagnostics data. <br/>
+	///   Uses the same <see cref="PluginDiagnosticsData"/> container as snapshot diagnostics. <br/>
+	///   The event 'PluginDiagnosticsData' is reserved for the default snapshot diagnostics data.
 	/// </summary>
 	/// <param name="eventName">The name of the event to publish.</param>
 	/// <param name="eventData">The data to publish.</param>
-	protected internal void PublishDiagnostics(string eventName, Dictionary<string, object?> eventData) {
+	/// <param name="mode">The mode of data collection for a plugin event.</param>
+	protected internal void PublishDiagnosticsData(string eventName, Dictionary<string, object?> eventData, PluginDiagnosticsDataCollectionMode mode = Event) {
+		if (eventName == nameof(PluginDiagnosticsData)) 
+		    throw new ArgumentException("Event name cannot be PluginDiagnosticsData", nameof(eventName));
+		
 		DiagnosticListener.Write(
-			nameof(PluginDiagnosticsData),
-			new PluginDiagnosticsData(
-				DiagnosticsName,
-				eventName,
-				eventData,
-				DateTimeOffset.UtcNow
-			)
+			eventName,
+			new PluginDiagnosticsData{
+				Source = DiagnosticsName,
+				EventName = eventName,
+				Data = eventData,
+				CollectionMode = mode
+			}
 		);
 	}
-
+	
 	/// <summary>
-	///   Publishes diagnostics data.
-	///   Used for ESDB telemetry
+	///		Publishes diagnostics events. <br/>
 	/// </summary>
-	/// <param name="eventData">The data to publish.</param>
-	protected internal void PublishDiagnostics(Dictionary<string, object?> eventData) =>
-		PublishDiagnostics(nameof(PluginDiagnosticsData), eventData);
-
+	/// <param name="pluginEvent"></param>
+	/// <typeparam name="T"></typeparam>
 	protected internal void PublishDiagnosticsEvent<T>(T pluginEvent) =>
 		DiagnosticListener.Write(typeof(T).Name, pluginEvent);
 
