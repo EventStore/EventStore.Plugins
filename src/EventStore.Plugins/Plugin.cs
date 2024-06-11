@@ -34,9 +34,7 @@ public abstract class Plugin : IPlugableComponent, IDisposable {
 			.Replace("Subsystems", "", OrdinalIgnoreCase)
 			.Replace("Subsystem", "", OrdinalIgnoreCase);
 
-		Version = version
-		          ?? pluginType.Assembly.GetName().Version?.ToString()
-		          ?? "1.0.0.0-preview";
+		Version = GetPluginVersion(version, pluginType);
 
 		LicensePublicKey = licensePublicKey;
 
@@ -47,6 +45,19 @@ public abstract class Plugin : IPlugableComponent, IDisposable {
 
 		IsEnabledResult = (true, "");
 		Configuration = null!;
+
+		return;
+
+		static string GetPluginVersion(string? pluginVersion, Type pluginType) {
+			const string emptyVersion = "0.0.0.0";
+			const string defaultVersion = "1.0.0.0-preview";
+
+			var version = pluginVersion
+			              ?? pluginType.Assembly.GetName().Version?.ToString()
+			              ?? emptyVersion;
+
+			return version != emptyVersion ? version : defaultVersion;
+		}
 	}
 
 	protected Plugin(PluginOptions options) : this(
@@ -75,7 +86,7 @@ public abstract class Plugin : IPlugableComponent, IDisposable {
 
 	/// <inheritdoc />
 	public KeyValuePair<string, object?>[] DiagnosticsTags { get; }
-	
+
 	/// <inheritdoc />
 	public bool Enabled => IsEnabledResult.Enabled;
 
@@ -89,67 +100,67 @@ public abstract class Plugin : IPlugableComponent, IDisposable {
 	/// </summary>
 	/// <param name="configuration">The configuration of the application.<br/></param>
 	public virtual (bool Enabled, string EnableInstructions) IsEnabled(IConfiguration configuration) => IsEnabledResult;
-	
+
 	public void Disable(string reason) => IsEnabledResult = (false, reason);
-	
+
 	void IPlugableComponent.ConfigureServices(IServiceCollection services, IConfiguration configuration) {
 		Configuration = configuration;
 		IsEnabledResult = IsEnabled(configuration);
-		
+
 		if (Enabled)
 			ConfigureServices(services, configuration);
-		
+
 		PublishDiagnosticsData(new() { ["enabled"] = Enabled }, Partial);
 	}
 
 	void IPlugableComponent.ConfigureApplication(IApplicationBuilder app, IConfiguration configuration) {
 		var logger = app.ApplicationServices.GetRequiredService<ILoggerFactory>().CreateLogger(GetType());
-		
+
 		// if the plugin is disabled, just get out
 		if (!Enabled) {
 			logger.LogInformation(
-				"{Version} plugin disabled. {EnableInstructions}",
-				Version, IsEnabledResult.EnableInstructions
+				"{PluginName} {Version} plugin disabled. {EnableInstructions}",
+				Name, Version, IsEnabledResult.EnableInstructions
 			);
 
 			return;
 		}
-		
+
 		// if the plugin is enabled, but the license is invalid, throw an exception and effectivly disable the plugin
 		var license = app.ApplicationServices.GetService<License>();
 		if (Enabled && LicensePublicKey is not null && (license is null || !license.IsValid(LicensePublicKey))) {
 			var ex = new PluginLicenseException(Name);
-			
+
 			IsEnabledResult = (false, ex.Message);
-			
+
 			PublishDiagnosticsData(new() { ["enabled"] = Enabled }, Partial);
-			
+
 			logger.LogInformation(
-				"{Version} plugin disabled. {EnableInstructions}",
-				Version, IsEnabledResult.EnableInstructions
+				"{PluginName} {Version} plugin disabled. {EnableInstructions}",
+				Name, Version, IsEnabledResult.EnableInstructions
 			);
-			
+
 			throw ex;
 		}
-		
+
 		// there is still a chance to disable the plugin when configuring the application
 		// this is useful when the plugin is enabled, but some conditions that can only be checked here are not met
 		ConfigureApplication(app, Configuration);
 
 		// at this point we know if the plugin is enabled and configured or not
 		if (Enabled)
-			logger.LogInformation("{Version} plugin enabled.", Version);
+			logger.LogInformation("{PluginName} {Version} plugin enabled.", Name, Version);
 		else {
 			logger.LogInformation(
-				"{Version} plugin disabled. {EnableInstructions}",
-				Version, IsEnabledResult.EnableInstructions
+				"{PluginName} {Version} plugin disabled. {EnableInstructions}",
+				Name, Version, IsEnabledResult.EnableInstructions
 			);
 		}
-		
+
 		// finally publish diagnostics data
 		PublishDiagnosticsData(new() { ["enabled"] = Enabled }, Partial);
 	}
-	
+
 	/// <summary>
 	///   Publishes diagnostics data as a snapshot.<br/>
 	///   Uses the <see cref="PluginDiagnosticsData"/> container.<br/>
@@ -164,7 +175,7 @@ public abstract class Plugin : IPlugableComponent, IDisposable {
 			Data = eventData,
 			CollectionMode = mode
 		};
-		
+
 		DiagnosticListener.Write(nameof(PluginDiagnosticsData), value);
 	}
 
@@ -177,9 +188,9 @@ public abstract class Plugin : IPlugableComponent, IDisposable {
 	/// <param name="eventData">The data to publish.</param>
 	/// <param name="mode">The mode of data collection for a plugin event.</param>
 	protected internal void PublishDiagnosticsData(string eventName, Dictionary<string, object?> eventData, PluginDiagnosticsDataCollectionMode mode = Event) {
-		if (eventName == nameof(PluginDiagnosticsData)) 
+		if (eventName == nameof(PluginDiagnosticsData))
 		    throw new ArgumentException("Event name cannot be PluginDiagnosticsData", nameof(eventName));
-		
+
 		DiagnosticListener.Write(
 			eventName,
 			new PluginDiagnosticsData{
@@ -190,7 +201,7 @@ public abstract class Plugin : IPlugableComponent, IDisposable {
 			}
 		);
 	}
-	
+
 	/// <summary>
 	///		Publishes diagnostics events. <br/>
 	/// </summary>
