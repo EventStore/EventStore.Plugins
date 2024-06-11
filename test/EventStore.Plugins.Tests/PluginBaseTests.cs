@@ -23,7 +23,7 @@ public class PluginBaseTests {
 
 		plugin.Options.Should().BeEquivalentTo(expectedOptions);
 	}
-	
+
 	[Fact]
 	public void subsystems_plugin_base_sets_defaults_automatically() {
 		var expectedOptions = new SubsystemsPluginOptions {
@@ -37,7 +37,7 @@ public class PluginBaseTests {
 
 		plugin.Options.Should().BeEquivalentTo(expectedOptions);
 	}
-	
+
 	[Fact]
 	public void plugin_diagnostics_snapshot_is_not_overriden_internally() {
 		// Arrange
@@ -45,23 +45,23 @@ public class PluginBaseTests {
 			["first_value"]  = 1,
 			["second_value"] = 2
 		};
-		
+
 		IPlugableComponent plugin = new NightCityPlugin(new(){ Name = Guid.NewGuid().ToString() }) {
 			OnConfigureServices = x => x.PublishDiagnosticsData(userDiagnosticsData),
 			OnConfigureApplication = x => x.Disable("Disabled on ConfigureApplication because I can")
 		};
-		
+
 		using var collector = PluginDiagnosticsDataCollector.Start(plugin.DiagnosticsName);
 
 		var builder = WebApplication.CreateBuilder();
-		
+
 		plugin.ConfigureServices(builder.Services, builder.Configuration);
-		
+
 		using var app = builder.Build();
 
 		// Act & Assert
 		plugin.ConfigureApplication(app, app.Configuration);
-		
+
 		var expectedDiagnosticsData = new Dictionary<string, object?>(userDiagnosticsData) {
 			["enabled"] = false
 		};
@@ -69,7 +69,7 @@ public class PluginBaseTests {
 		collector.CollectedEvents(plugin.DiagnosticsName).Should().ContainSingle()
 			.Which.Data.Should().BeEquivalentTo(expectedDiagnosticsData);
 	}
-	
+
 	[Fact]
 	public void comercial_plugin_is_disabled_when_licence_is_missing() {
 		// Arrange
@@ -137,25 +137,25 @@ public class PluginBaseTests {
 		// Act & Assert
 		configure.Should().NotThrow<Exception>();
 	}
-	
+
 	[Fact]
 	public void plugin_can_be_disabled_on_ConfigureServices() {
 		// Arrange
 		IPlugableComponent plugin = new NightCityPlugin(new(){ Name = Guid.NewGuid().ToString() }) {
 			OnConfigureServices = x => x.Disable("Disabled on ConfigureServices because I can")
 		};
-		
+
 		using var collector = PluginDiagnosticsDataCollector.Start(plugin.DiagnosticsName);
 
 		var builder = WebApplication.CreateBuilder();
 
 		// Act & Assert
 		plugin.Enabled.Should().BeTrue();
-		
+
 		plugin.ConfigureServices(builder.Services, builder.Configuration);
-		
+
 		plugin.Enabled.Should().BeFalse();
-		
+
 		collector.CollectedEvents(plugin.DiagnosticsName).Should().ContainSingle()
 			.Which.Data.Should().ContainKey("enabled")
 			.WhoseValue.Should().BeEquivalentTo(false);
@@ -167,22 +167,22 @@ public class PluginBaseTests {
 		IPlugableComponent plugin = new NightCityPlugin(new(){ Name = Guid.NewGuid().ToString() }) {
 			OnConfigureApplication = x => x.Disable("Disabled on ConfigureApplication because I can")
 		};
-		
+
 		using var collector = PluginDiagnosticsDataCollector.Start(plugin.DiagnosticsName);
 
 		var builder = WebApplication.CreateBuilder();
-		
+
 		plugin.ConfigureServices(builder.Services, builder.Configuration);
-		
+
 		using var app = builder.Build();
 
 		// Act & Assert
 		plugin.Enabled.Should().BeTrue();
-		
+
 		plugin.ConfigureApplication(app, app.Configuration);
-		
+
 		plugin.Enabled.Should().BeFalse();
-		
+
 		collector.CollectedEvents(plugin.DiagnosticsName).Should().ContainSingle()
 			.Which.Data.Should().ContainKey("enabled")
 			.WhoseValue.Should().BeEquivalentTo(false);
@@ -212,11 +212,11 @@ public class PluginBaseTests {
 
 		public Action<Plugin>? OnConfigureServices    { get; set; }
 		public Action<Plugin>? OnConfigureApplication { get; set; }
-		
-		public override void ConfigureServices(IServiceCollection services, IConfiguration configuration) => 
+
+		public override void ConfigureServices(IServiceCollection services, IConfiguration configuration) =>
 			OnConfigureServices?.Invoke(this);
 
-		public override void ConfigureApplication(IApplicationBuilder app, IConfiguration configuration) => 
+		public override void ConfigureApplication(IApplicationBuilder app, IConfiguration configuration) =>
 			OnConfigureApplication?.Invoke(this);
 	}
 
