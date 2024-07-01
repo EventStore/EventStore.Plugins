@@ -18,8 +18,14 @@ public class PluginDiagnosticsDataCollector : IDisposable {
 
 			CollectedEventsByPlugin.AddOrUpdate(
 				source,
-				static (_, state) => [state.PluginData],
+				static (_, state) =>
+					state.PluginData.CollectionMode == PluginDiagnosticsDataCollectionMode.Partial
+						? [state.PluginData with { CollectionMode = PluginDiagnosticsDataCollectionMode.Snapshot }]
+						: [state.PluginData],
 				static (_, collected, state) => {
+					// NB: snapshots and partials have EventName "PluginDiagnosticsData" and events do not have that name
+					// so filtering on the EventName also filters the collection mode.
+					// Partials never end up in the collection.
 					switch (state.PluginData.CollectionMode) {
 						case PluginDiagnosticsDataCollectionMode.Event:
 							collected.Add(state.PluginData);
@@ -29,14 +35,14 @@ public class PluginDiagnosticsDataCollector : IDisposable {
 							collected.Add(state.PluginData);
 							break;
 						case PluginDiagnosticsDataCollectionMode.Partial:
-							var events = collected.Where(x => x.EventName == state.PluginData.EventName).ToArray();
+							var snapshots = collected.Where(x => x.EventName == state.PluginData.EventName).ToArray();
 
-							// if no event exists, create new
-							if (events.Length == 0)
-								collected.Add(state.PluginData);
+							// if no snapshot exists, create new
+							if (snapshots.Length == 0)
+								collected.Add(state.PluginData with { CollectionMode = PluginDiagnosticsDataCollectionMode.Snapshot});
 							else {
-								// update all collected events
-								foreach (var evt in events) {
+								// update the snapshot (there should be one)
+								foreach (var evt in snapshots) {
 									foreach (var (key, value) in state.PluginData.Data)
 										evt.Data[key] = value;
 								}
@@ -45,6 +51,7 @@ public class PluginDiagnosticsDataCollector : IDisposable {
 							break;
 					}
 
+					// TODO: presumably we don't want to remove the Snapshot
 					if (collected.Count > state.Capacity)
 						collected.Remove(collected.Min);
 

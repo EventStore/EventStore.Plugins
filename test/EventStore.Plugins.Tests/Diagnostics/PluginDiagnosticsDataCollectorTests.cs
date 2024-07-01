@@ -13,8 +13,9 @@ public class PluginDiagnosticsDataCollectorTests {
 
 		plugin.PublishDiagnosticsData(new() { ["enabled"] = plugin.Enabled });
 
-		sut.CollectedEvents(plugin.DiagnosticsName).Should().ContainSingle().Which
-			.Data["enabled"].Should().Be(plugin.Enabled);
+		var diagnosticsData = sut.CollectedEvents(plugin.DiagnosticsName).Should().ContainSingle().Which;
+		diagnosticsData.Data["enabled"].Should().Be(plugin.Enabled);
+		diagnosticsData.CollectionMode.Should().Be(PluginDiagnosticsDataCollectionMode.Snapshot);
 	}
 	
 	[Fact]
