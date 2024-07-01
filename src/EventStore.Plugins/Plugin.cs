@@ -30,6 +30,7 @@ public abstract class Plugin : IPlugableComponent, IDisposable {
 
 		Name = name ?? pluginType.Name
 			.Replace("Plugin", "", OrdinalIgnoreCase)
+			.Replace("Provider", "", OrdinalIgnoreCase)
 			.Replace("Component", "", OrdinalIgnoreCase)
 			.Replace("Subsystems", "", OrdinalIgnoreCase)
 			.Replace("Subsystem", "", OrdinalIgnoreCase);
