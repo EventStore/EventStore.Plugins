@@ -16,15 +16,19 @@ public class LicenseTests {
 		var (publicKey, privateKey) = CreateKeyPair();
 
 		var license = await License.CreateAsync(publicKey, privateKey, new Dictionary<string, object> {
-			{ "foo", "bar" }
+			{ "foo", "bar" },
+			{ "my_entitlement", "true" },
 		});
 
 		// check repeatedly because of https://github.com/dotnet/runtime/issues/43087
-		(await license.IsValidAsync(publicKey)).Should().BeTrue();
-		(await license.IsValidAsync(publicKey)).Should().BeTrue();
-		(await license.IsValidAsync(publicKey)).Should().BeTrue();
+		(await license.ValidateAsync(publicKey)).Should().BeTrue();
+		(await license.ValidateAsync(publicKey)).Should().BeTrue();
+		(await license.ValidateAsync(publicKey)).Should().BeTrue();
 
 		license.Token.Claims.First(c => c.Type == "foo").Value.Should().Be("bar");
+		license.HasEntitlement("my_entitlement").Should().BeTrue();
+		license.HasEntitlements(["my_entitlement", "missing_entitlement"], out var missing).Should().BeFalse();
+		missing.Should().Be("missing_entitlement");
 	}
 
 	[Fact]
@@ -36,7 +40,7 @@ public class LicenseTests {
 			{ "foo", "bar" }
 		});
 
-		(await license.IsValidAsync(publicKey2)).Should().BeFalse();
+		(await license.ValidateAsync(publicKey2)).Should().BeFalse();
 	}
 
 	[Fact]
