@@ -1,5 +1,6 @@
 // ReSharper disable AccessToDisposedClosure
 
+using System.Reactive.Subjects;
 using System.Security.Cryptography;
 using EventStore.Plugins.Diagnostics;
 using EventStore.Plugins.Licensing;
@@ -16,7 +17,7 @@ public class PluginBaseTests {
 		var expectedOptions = new PluginOptions {
 			Name = "NightCity",
 			Version = "1.0.0.0",
-			DiagnosticsName = "NightCity"
+			DiagnosticsName = "NightCity",
 		};
 
 		using var plugin = new NightCityPlugin();
@@ -71,62 +72,70 @@ public class PluginBaseTests {
 	}
 
 	[Fact]
-	public void comercial_plugin_is_disabled_when_licence_is_missing() {
+	public void commercial_plugin_is_disabled_when_licence_is_missing() {
 		// Arrange
+		var licenseService = new FakeLicenseService(createLicense: false);
+
 		IPlugableComponent plugin = new NightCityPlugin(new() {
-			LicensePublicKey = "valid-public-key"
+			LicensePublicKey = licenseService.PublicKey,
+			RequiredEntitlements = ["starlight"],
 		});
 
 		var builder = WebApplication.CreateBuilder();
+
+		builder.Services.AddSingleton<ILicenseService>(licenseService);
 
 		plugin.ConfigureServices(builder.Services, builder.Configuration);
 
 		using var app = builder.Build();
 
-		var configure = () => plugin.ConfigureApplication(app, app.Configuration);
+		// Act
+		plugin.ConfigureApplication(app, app.Configuration);
 
-		// Act & Assert
-		configure.Should().Throw<PluginLicenseException>().Which
+		// Assert
+		licenseService.RejectionException.Should().BeOfType<PluginLicenseException>().Which
 			.PluginName.Should().Be(plugin.Name);
 	}
 
 	[Fact]
-	public void comercial_plugin_is_disabled_when_licence_is_invalid() {
+	public void commercial_plugin_is_disabled_when_licence_is_missing_entitlement() {
 		// Arrange
-		var (license, _) = CreateLicense();
-		var (_, invalidPublicKey) = CreateLicense();
+		var licenseService = new FakeLicenseService(createLicense: true);
 
 		IPlugableComponent plugin = new NightCityPlugin(new() {
-			LicensePublicKey = invalidPublicKey
+			LicensePublicKey = licenseService.PublicKey,
+			RequiredEntitlements = ["starlight"],
 		});
 
 		var builder = WebApplication.CreateBuilder();
 
-		builder.Services.AddSingleton(license);
+		builder.Services.AddSingleton<ILicenseService>(licenseService);
 
 		plugin.ConfigureServices(builder.Services, builder.Configuration);
 
 		using var app = builder.Build();
 
-		var configure = () => plugin.ConfigureApplication(app, app.Configuration);
+		// Act
+		plugin.ConfigureApplication(app, app.Configuration);
 
-		// Act & Assert
-		configure.Should().Throw<PluginLicenseException>().Which
+		// Assert
+		licenseService.RejectionException.Should().BeOfType<PluginLicenseEntitlementException>().Which
 			.PluginName.Should().Be(plugin.Name);
 	}
 
 	[Fact]
-	public void comercial_plugin_is_enabled_when_licence_is_present() {
+	public void commercial_plugin_is_enabled_when_licence_is_present() {
 		// Arrange
-		var (license, publicKey) = CreateLicense();
+		var licenseService = new FakeLicenseService(createLicense: true, "starlight");
 
 		IPlugableComponent plugin = new NightCityPlugin(new() {
-			LicensePublicKey = publicKey
+			LicensePublicKey = licenseService.PublicKey,
+			RequiredEntitlements = ["starlight"],
 		});
 
 		var builder = WebApplication.CreateBuilder();
 
-		builder.Services.AddSingleton(license);
+		builder.Services.AddSingleton<ILicenseService>(licenseService);
 
 		plugin.ConfigureServices(builder.Services, builder.Configuration);
 
@@ -188,13 +197,43 @@ public class PluginBaseTests {
 			.WhoseValue.Should().BeEquivalentTo(false);
 	}
 
-	static (License License, string PublicKey) CreateLicense(Dictionary<string, object>? claims = null) {
-		using var rsa = RSA.Create(1024);
+	class FakeLicenseService : ILicenseService {
+		public FakeLicenseService(
+			bool createLicense,
+			params string[] entitlements) {
 
-		var publicKey = ToBase64String(rsa.ExportRSAPublicKey());
-		var privateKey = ToBase64String(rsa.ExportRSAPrivateKey());
+			using var rsa = RSA.Create(1024);
 
-		return (License.Create(publicKey, privateKey, claims), publicKey);
+			PublicKey = ToBase64String(rsa.ExportRSAPublicKey());
+			var privateKey = ToBase64String(rsa.ExportRSAPrivateKey());
+
+			SelfLicense = License.Create(PublicKey, privateKey);
+
+			if (createLicense) {
+				CurrentLicense = License.Create(PublicKey, privateKey, entitlements.ToDictionary(
+					x => x,
+					x => (object)"true"));
+				Licenses = new BehaviorSubject<License>(CurrentLicense);
+			} else {
+				CurrentLicense = null;
+				var licenses = new Subject<License>();
+				licenses.OnError(new Exception("license expired, say"));
+				Licenses = licenses;
+			}
+		}
+
+		public string PublicKey { get; }
+		public License SelfLicense { get; }
+
+		public License? CurrentLicense { get; }
+
+		public IObservable<License> Licenses { get; }
+
+		public void RejectLicense(Exception ex) {
+			RejectionException = ex;
+		}
+
+		public Exception? RejectionException { get; private set; }
 	}
 
 	class NightCityPlugin : Plugin {
@@ -202,7 +241,8 @@ public class PluginBaseTests {
 			Options = options with {
 				Name = Name,
 				Version = Version,
-				DiagnosticsName = DiagnosticsName
+				RequiredEntitlements = RequiredEntitlements,
+				DiagnosticsName = DiagnosticsName,
 			};
 		}
 

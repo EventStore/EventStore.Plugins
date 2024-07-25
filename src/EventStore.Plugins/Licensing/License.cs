@@ -1,4 +1,5 @@
-﻿using System.Security.Cryptography;
+﻿using System.Diagnostics.CodeAnalysis;
+using System.Security.Cryptography;
 using Microsoft.IdentityModel.JsonWebTokens;
 using Microsoft.IdentityModel.Tokens;
 using static System.Convert;
@@ -6,13 +7,33 @@ using static System.Convert;
 namespace EventStore.Plugins.Licensing;
 
 public record License(JsonWebToken Token) {
-	public async Task<bool> IsValidAsync(string publicKey) {
+	public string? CurrentCultureIgnoreCase { get; private set; }
+
+	public async Task<bool> ValidateAsync(string publicKey) {
 		var result = await ValidateTokenAsync(publicKey, Token.EncodedToken);
 		return result.IsValid;
 	}
 
-	public bool IsValid(string publicKey) =>
-		IsValidAsync(publicKey).GetAwaiter().GetResult();
+	public bool HasEntitlements(string[] entitlements, [MaybeNullWhen(true)] out string missing) {
+		foreach (var entitlement in entitlements) {
+			if (!HasEntitlement(entitlement)) {
+				missing = entitlement;
+				return false;
+			}
+		}
+
+		missing = default;
+		return true;
+	}
+
+	public bool HasEntitlement(string entitlement) {
+		foreach (var claim in Token.Claims)
+			if (claim.Type.Equals(entitlement, StringComparison.CurrentCultureIgnoreCase) &&
+				claim.Value.Equals("true", StringComparison.CurrentCultureIgnoreCase))
+				return true;
+
+		return false;
+	}
 
 	public static async Task<License> CreateAsync(
 		string publicKey,

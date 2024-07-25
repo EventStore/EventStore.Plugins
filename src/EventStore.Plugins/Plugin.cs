@@ -1,12 +1,12 @@
 using System.Diagnostics;
 using EventStore.Plugins.Diagnostics;
+using EventStore.Plugins.Licensing;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using static System.StringComparison;
 using static EventStore.Plugins.Diagnostics.PluginDiagnosticsDataCollectionMode;
-using License = EventStore.Plugins.Licensing.License;
 
 namespace EventStore.Plugins;
 
@@ -14,6 +14,7 @@ public record PluginOptions {
 	public string? Name { get; init; }
 	public string? Version { get; init; }
 	public string? LicensePublicKey { get; init; }
+	public string[]? RequiredEntitlements { get; init; }
 	public string? DiagnosticsName { get; init; }
 	public KeyValuePair<string, object?>[] DiagnosticsTags { get; init; } = [];
 }
@@ -24,8 +25,10 @@ public abstract class Plugin : IPlugableComponent, IDisposable {
 		string? name = null,
 		string? version = null,
 		string? licensePublicKey = null,
+		string[]? requiredEntitlements = null,
 		string? diagnosticsName = null,
 		params KeyValuePair<string, object?>[] diagnosticsTags) {
+
 		var pluginType = GetType();
 
 		Name = name ?? pluginType.Name
@@ -38,6 +41,7 @@ public abstract class Plugin : IPlugableComponent, IDisposable {
 		Version = GetPluginVersion(version, pluginType);
 
 		LicensePublicKey = licensePublicKey;
+		RequiredEntitlements = requiredEntitlements;
 
 		DiagnosticsName = diagnosticsName ?? Name;
 		DiagnosticsTags = diagnosticsTags;
@@ -65,10 +69,13 @@ public abstract class Plugin : IPlugableComponent, IDisposable {
 		options.Name,
 		options.Version,
 		options.LicensePublicKey,
+		options.RequiredEntitlements,
 		options.DiagnosticsName,
 		options.DiagnosticsTags) { }
 
 	public string? LicensePublicKey { get; }
+
+	public string[]? RequiredEntitlements { get; }
 
 	DiagnosticListener DiagnosticListener { get; }
 
@@ -127,21 +134,45 @@ public abstract class Plugin : IPlugableComponent, IDisposable {
 			return;
 		}
 
-		// if the plugin is enabled, but the license is invalid, throw an exception and effectivly disable the plugin
-		var license = app.ApplicationServices.GetService<License>();
-		if (Enabled && LicensePublicKey is not null && (license is null || !license.IsValid(LicensePublicKey))) {
-			var ex = new PluginLicenseException(Name);
+		if (Enabled && LicensePublicKey is not null) {
+			// the plugin is enabled and requires a license
+			// the EULA prevents tampering with the license mechanism. we make the license mechanism
+			// robust enough that circumventing it requires intentional tampering.
+			var licenseService = app.ApplicationServices.GetRequiredService<ILicenseService>();
 
-			IsEnabledResult = (false, ex.Message);
+			// authenticate the license service itself so that we can trust it to
+			// 1. send us any licences at all
+			// 2. respect our decision to reject licences
+			Task.Run(async () => {
+				var authentic = await licenseService.SelfLicense.ValidateAsync(LicensePublicKey);
+				if (!authentic) {
+					// this should never happen, but could if we end up with some unknown LicenseService.
+					logger.LogCritical("LicenseService could not be authenticated");
+					Environment.Exit(11);
+				}
+			});
 
-			PublishDiagnosticsData(new() { ["enabled"] = Enabled }, Partial);
+			// authenticate the licenses that the license service sends us
+			licenseService.Licenses.Subscribe(
+				onNext: async license => {
+					if (await license.ValidateAsync(LicensePublicKey)) {
+						// got an authentic license. check required entitlements
+						if (license.HasEntitlement("ALL"))
+							return;
 
-			logger.LogInformation(
-				"{PluginName} {Version} plugin disabled. {EnableInstructions}",
-				Name, Version, IsEnabledResult.EnableInstructions
-			);
-
-			throw ex;
+						if (!license.HasEntitlements(RequiredEntitlements ?? [], out var missing)) {
+							licenseService.RejectLicense(new PluginLicenseEntitlementException(Name, missing));
+						}
+					} else {
+						// this should never happen
+						logger.LogCritical("ESDB License was not valid");
+						licenseService.RejectLicense(new PluginLicenseException(Name, new Exception("ESDB License was not valid")));
+						Environment.Exit(12);
+					}
+				},
+				onError: ex => {
+					licenseService.RejectLicense(new PluginLicenseException(Name, ex));
+				});
 		}
 
 		// there is still a chance to disable the plugin when configuring the application
