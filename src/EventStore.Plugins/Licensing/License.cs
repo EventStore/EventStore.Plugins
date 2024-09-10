@@ -14,6 +14,14 @@ public record License(JsonWebToken Token) {
 		return result.IsValid;
 	}
 
+	public async Task<bool> TryValidateAsync(string publicKey) {
+		try {
+			return await ValidateAsync(publicKey);
+		} catch {
+			return false;
+		}
+	}
+
 	public bool HasEntitlements(string[] entitlements, [MaybeNullWhen(true)] out string missing) {
 		foreach (var entitlement in entitlements) {
 			if (!HasEntitlement(entitlement)) {

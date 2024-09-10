@@ -93,8 +93,8 @@ public class PluginBaseTests {
 		plugin.ConfigureApplication(app, app.Configuration);
 
 		// Assert
-		licenseService.RejectionException.Should().BeOfType<PluginLicenseException>().Which
-			.PluginName.Should().Be(plugin.Name);
+		licenseService.RejectionException.Should().BeOfType<LicenseException>().Which
+			.FeatureName.Should().Be(plugin.Name);
 	}
 
 	[Fact]
@@ -119,8 +119,8 @@ public class PluginBaseTests {
 		plugin.ConfigureApplication(app, app.Configuration);
 
 		// Assert
-		licenseService.RejectionException.Should().BeOfType<PluginLicenseEntitlementException>().Which
-			.PluginName.Should().Be(plugin.Name);
+		licenseService.RejectionException.Should().BeOfType<LicenseEntitlementException>().Which
+			.FeatureName.Should().Be(plugin.Name);
 	}
 
 	[Fact]
@@ -197,7 +197,7 @@ public class PluginBaseTests {
 			.WhoseValue.Should().BeEquivalentTo(false);
 	}
 
-	class FakeLicenseService : ILicenseService {
+	public class FakeLicenseService : ILicenseService {
 		public FakeLicenseService(
 			bool createLicense,
 			params string[] entitlements) {
