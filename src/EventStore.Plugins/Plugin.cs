@@ -136,43 +136,14 @@ public abstract class Plugin : IPlugableComponent, IDisposable {
 
 		if (Enabled && LicensePublicKey is not null) {
 			// the plugin is enabled and requires a license
-			// the EULA prevents tampering with the license mechanism. we make the license mechanism
-			// robust enough that circumventing it requires intentional tampering.
 			var licenseService = app.ApplicationServices.GetRequiredService<ILicenseService>();
 
-			// authenticate the license service itself so that we can trust it to
-			// 1. send us any licences at all
-			// 2. respect our decision to reject licences
-			Task.Run(async () => {
-				var authentic = await licenseService.SelfLicense.ValidateAsync(LicensePublicKey);
-				if (!authentic) {
-					// this should never happen, but could if we end up with some unknown LicenseService.
-					logger.LogCritical("LicenseService could not be authenticated");
-					Environment.Exit(11);
-				}
-			});
-
-			// authenticate the licenses that the license service sends us
-			licenseService.Licenses.Subscribe(
-				onNext: async license => {
-					if (await license.ValidateAsync(LicensePublicKey)) {
-						// got an authentic license. check required entitlements
-						if (license.HasEntitlement("ALL"))
-							return;
-
-						if (!license.HasEntitlements(RequiredEntitlements ?? [], out var missing)) {
-							licenseService.RejectLicense(new PluginLicenseEntitlementException(Name, missing));
-						}
-					} else {
-						// this should never happen
-						logger.LogCritical("ESDB License was not valid");
-						licenseService.RejectLicense(new PluginLicenseException(Name, new Exception("ESDB License was not valid")));
-						Environment.Exit(12);
-					}
-				},
-				onError: ex => {
-					licenseService.RejectLicense(new PluginLicenseException(Name, ex));
-				});
+			_ = LicenseMonitor.MonitorAsync(
+				Name,
+				RequiredEntitlements ?? [],
+				licenseService,
+				logger,
+				LicensePublicKey);
 		}
 
 		// there is still a chance to disable the plugin when configuring the application
