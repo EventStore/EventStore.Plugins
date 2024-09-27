@@ -1,3 +1,4 @@
+#pragma warning disable IDE0073 // The file header does not match the required text
 //The Inflector extensions were partially cloned from Inflector (https://github.com/srkirkland/Inflector)
 
 //The MIT License (MIT)
