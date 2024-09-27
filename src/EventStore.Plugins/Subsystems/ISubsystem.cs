@@ -1,4 +1,4 @@
-﻿namespace EventStore.Plugins.Subsystems;
+namespace EventStore.Plugins.Subsystems;
 
 public interface ISubsystem : IPlugableComponent {
 	Task Start();

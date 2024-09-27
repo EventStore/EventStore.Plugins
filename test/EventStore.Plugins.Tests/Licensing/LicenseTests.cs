@@ -1,4 +1,4 @@
-﻿using System.Security.Cryptography;
+using System.Security.Cryptography;
 using EventStore.Plugins.Licensing;
 
 namespace EventStore.Plugins.Tests.Licensing;

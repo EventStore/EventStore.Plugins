@@ -1,4 +1,4 @@
-﻿namespace EventStore.Plugins.Licensing;
+namespace EventStore.Plugins.Licensing;
 
 // Allows plugins to access the current license, get updates to it, and reject a license
 // if it is missing entitlements
