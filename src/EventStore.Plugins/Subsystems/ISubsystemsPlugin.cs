@@ -1,4 +1,4 @@
-﻿namespace EventStore.Plugins.Subsystems;
+namespace EventStore.Plugins.Subsystems;
 
 /// <summary>
 ///     A plugin that can create multiple subsystems.

@@ -1,4 +1,4 @@
-﻿namespace EventStore.Plugins.MD5;
+namespace EventStore.Plugins.MD5;
 
 public interface IMD5Plugin {
 	string Name { get; }

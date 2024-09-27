@@ -1,4 +1,4 @@
-﻿namespace EventStore.Plugins.Authentication;
+namespace EventStore.Plugins.Authentication;
 
 public interface IAuthenticationPlugin {
 	string Name { get; }

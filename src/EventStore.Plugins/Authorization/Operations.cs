@@ -1,4 +1,4 @@
-﻿namespace EventStore.Plugins.Authorization;
+namespace EventStore.Plugins.Authorization;
 
 public static class Operations {
 	public static class Node {

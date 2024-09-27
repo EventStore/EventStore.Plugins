@@ -1,4 +1,4 @@
-﻿using EventStore.Plugins.Licensing;
+using EventStore.Plugins.Licensing;
 using Microsoft.Extensions.Logging.Testing;
 
 namespace EventStore.Plugins.Tests.Licensing;
