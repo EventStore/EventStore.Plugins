@@ -13,17 +13,19 @@ public class LicenseMonitorTests {
 			createLicense: true,
 			entitlements: ["MY_ENTITLEMENT"]);
 
+		Exception? licenseException = null;
 		var criticalError = false;
 
 		using var subscription = await LicenseMonitor.MonitorAsync(
 			featureName: "TestFeature",
 			requiredEntitlements: ["MY_ENTITLEMENT"],
 			licenseService: licenseService,
+			onLicenseException: ex => licenseException = ex,
 			logger: new FakeLogger(),
 			licensePublicKey: licenseService.PublicKey,
 			onCriticalError: _ => criticalError = true);
 
-		licenseService.RejectionException.Should().BeNull();
+		licenseException.Should().BeNull();
 		criticalError.Should().BeFalse();
 	}
 
@@ -33,17 +35,19 @@ public class LicenseMonitorTests {
 			createLicense: true,
 			entitlements: ["ALL"]);
 
+		Exception? licenseException = null;
 		var criticalError = false;
 
 		using var subscription = await LicenseMonitor.MonitorAsync(
 			featureName: "TestFeature",
 			requiredEntitlements: ["MY_ENTITLEMENT"],
 			licenseService: licenseService,
+			onLicenseException: ex => licenseException = ex,
 			logger: new FakeLogger(),
 			licensePublicKey: licenseService.PublicKey,
 			onCriticalError: _ => criticalError = true);
 
-		licenseService.RejectionException.Should().BeNull();
+		licenseException.Should().BeNull();
 		criticalError.Should().BeFalse();
 	}
 
@@ -53,17 +57,19 @@ public class LicenseMonitorTests {
 			createLicense: true,
 			entitlements: []);
 
+		Exception? licenseException = null;
 		var criticalError = false;
 
 		using var subscription = await LicenseMonitor.MonitorAsync(
 			featureName: "TestFeature",
 			requiredEntitlements: ["MY_ENTITLEMENT"],
 			licenseService: licenseService,
+			onLicenseException: ex => licenseException = ex,
 			logger: new FakeLogger(),
 			licensePublicKey: licenseService.PublicKey,
 			onCriticalError: _ => criticalError = true);
 
-		licenseService.RejectionException.Should().BeOfType<LicenseEntitlementException>()
+		licenseException.Should().BeOfType<LicenseEntitlementException>()
 			.Which.MissingEntitlement.Should().Be("MY_ENTITLEMENT");
 		criticalError.Should().BeFalse();
 	}
@@ -73,17 +79,19 @@ public class LicenseMonitorTests {
 		var licenseService = new PluginBaseTests.FakeLicenseService(
 			createLicense: false);
 
+		Exception? licenseException = null;
 		var criticalError = false;
 
 		using var subscription = await LicenseMonitor.MonitorAsync(
 			featureName: "TestFeature",
 			requiredEntitlements: [],
 			licenseService: licenseService,
+			onLicenseException: ex => licenseException = ex,
 			logger: new FakeLogger(),
 			licensePublicKey: licenseService.PublicKey,
 			onCriticalError: _ => criticalError = true);
 
-		licenseService.RejectionException.Should().BeOfType<LicenseException>();
+		licenseException.Should().BeOfType<LicenseException>();
 		criticalError.Should().BeFalse();
 	}
 
@@ -93,17 +101,19 @@ public class LicenseMonitorTests {
 			createLicense: true,
 			entitlements: []);
 
+		Exception? licenseException = null;
 		var criticalError = false;
 
 		using var subscription = await LicenseMonitor.MonitorAsync(
 			featureName: "TestFeature",
 			requiredEntitlements: [],
 			licenseService: licenseService,
+			onLicenseException: ex => licenseException = ex,
 			logger: new FakeLogger(),
 			licensePublicKey: "a_different_public_key",
 			onCriticalError: _ => criticalError = true);
 
-		licenseService.RejectionException.Should().BeOfType<LicenseException>();
+		licenseException.Should().BeOfType<LicenseException>();
 		criticalError.Should().BeTrue();
 	}
 }
