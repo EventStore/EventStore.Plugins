@@ -7,10 +7,11 @@ namespace EventStore.Plugins.Authentication;
 
 public abstract class AuthenticationProviderBase(PluginOptions options) : Plugin(options), IAuthenticationProvider {
 	protected AuthenticationProviderBase(
-		string? name = null, 
+		string? name = null,
 		string? version = null,
 		string? licensePublicKey = null,
 		string[]? requiredEntitlements = null,
+		Action<Exception>? onLicenseException = null,
 		string? diagnosticsName = null,
 		params KeyValuePair<string, object?>[] diagnosticsTags
 	) : this(new() {
@@ -18,6 +19,7 @@ public abstract class AuthenticationProviderBase(PluginOptions options) : Plugin
 		Version = version,
 		LicensePublicKey = licensePublicKey,
 		RequiredEntitlements = requiredEntitlements,
+		OnLicenseException = onLicenseException,
 		DiagnosticsName = diagnosticsName,
 		DiagnosticsTags = diagnosticsTags
 	}) { }

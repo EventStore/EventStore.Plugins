@@ -6,12 +6,13 @@ using Microsoft.Extensions.Logging;
 namespace EventStore.Plugins.Licensing;
 
 public static class LicenseMonitor {
-	// the EULA prevents tampering with the license mechanism. we make the license mechanism
+	// the license (ESLv2) prevents tampering with the license mechanism. we make the license mechanism
 	// robust enough that circumventing it requires intentional tampering.
 	public static async Task<IDisposable> MonitorAsync(
 		string featureName,
 		string[] requiredEntitlements,
 		ILicenseService licenseService,
+		Action<Exception> onLicenseException,
 		ILogger logger,
 		string licensePublicKey = LicenseConstants.LicensePublicKey,
 		Action<int>? onCriticalError = null) {
@@ -37,17 +38,17 @@ public static class LicenseMonitor {
 						return;
 
 					if (!license.HasEntitlements(requiredEntitlements, out var missing)) {
-						licenseService.RejectLicense(new LicenseEntitlementException(featureName, missing));
+						onLicenseException(new LicenseEntitlementException(featureName, missing));
 					}
 				} else {
 					// this should never happen
 					logger.LogCritical("ESDB License was not valid");
-					licenseService.RejectLicense(new LicenseException(featureName, new Exception("ESDB License was not valid")));
+					onLicenseException(new LicenseException(featureName, new Exception("ESDB License was not valid")));
 					onCriticalError(12);
 				}
 			},
 			onError: ex => {
-				licenseService.RejectLicense(new LicenseException(featureName, ex));
+				onLicenseException(new LicenseException(featureName, ex));
 			});
 	}
 }

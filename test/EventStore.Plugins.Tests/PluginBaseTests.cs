@@ -127,6 +127,35 @@ public class PluginBaseTests {
 	}
 
 	[Fact]
+	public void plugin_can_implement_its_own_license_error_handling() {
+		// Arrange
+		var licenseService = new FakeLicenseService(createLicense: true);
+
+		Exception? licenseException = null;
+		IPlugableComponent plugin = new NightCityPlugin(new() {
+			LicensePublicKey = licenseService.PublicKey,
+			RequiredEntitlements = ["starlight"],
+			OnLicenseException = ex => licenseException = ex,
+		});
+
+		var builder = WebApplication.CreateBuilder();
+
+		builder.Services.AddSingleton<ILicenseService>(licenseService);
+
+		plugin.ConfigureServices(builder.Services, builder.Configuration);
+
+		using var app = builder.Build();
+
+		// Act
+		plugin.ConfigureApplication(app, app.Configuration);
+
+		// Assert
+		licenseService.RejectionException.Should().BeNull();
+		licenseException.Should().BeOfType<LicenseEntitlementException>().Which
+			.FeatureName.Should().Be(plugin.Name);
+	}
+
+	[Fact]
 	public void commercial_plugin_is_enabled_when_licence_is_present() {
 		// Arrange
 		var licenseService = new FakeLicenseService(createLicense: true, "starlight");

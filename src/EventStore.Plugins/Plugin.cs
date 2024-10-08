@@ -18,6 +18,7 @@ public record PluginOptions {
 	public string? Version { get; init; }
 	public string? LicensePublicKey { get; init; }
 	public string[]? RequiredEntitlements { get; init; }
+	public Action<Exception>? OnLicenseException { get; init; }
 	public string? DiagnosticsName { get; init; }
 	public KeyValuePair<string, object?>[] DiagnosticsTags { get; init; } = [];
 }
@@ -29,6 +30,7 @@ public abstract class Plugin : IPlugableComponent, IDisposable {
 		string? version = null,
 		string? licensePublicKey = null,
 		string[]? requiredEntitlements = null,
+		Action<Exception>? onLicenseException = null,
 		string? diagnosticsName = null,
 		params KeyValuePair<string, object?>[] diagnosticsTags) {
 
@@ -45,6 +47,7 @@ public abstract class Plugin : IPlugableComponent, IDisposable {
 
 		LicensePublicKey = licensePublicKey;
 		RequiredEntitlements = requiredEntitlements;
+		OnLicenseException = onLicenseException;
 
 		DiagnosticsName = diagnosticsName ?? Name;
 		DiagnosticsTags = diagnosticsTags;
@@ -73,12 +76,15 @@ public abstract class Plugin : IPlugableComponent, IDisposable {
 		options.Version,
 		options.LicensePublicKey,
 		options.RequiredEntitlements,
+		options.OnLicenseException,
 		options.DiagnosticsName,
 		options.DiagnosticsTags) { }
 
 	public string? LicensePublicKey { get; }
 
 	public string[]? RequiredEntitlements { get; }
+
+	Action<Exception>? OnLicenseException { get; }
 
 	DiagnosticListener DiagnosticListener { get; }
 
@@ -145,6 +151,7 @@ public abstract class Plugin : IPlugableComponent, IDisposable {
 				Name,
 				RequiredEntitlements ?? [],
 				licenseService,
+				OnLicenseException ?? licenseService.RejectLicense,
 				logger,
 				LicensePublicKey);
 		}
