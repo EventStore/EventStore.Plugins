@@ -10,12 +10,14 @@ public abstract class AuthorizationProviderBase(PluginOptions options) : Plugin(
 		string? name = null, 
 		string? version = null,
 		string? licensePublicKey = null,
+		string[]? requiredEntitlements = null,
 		string? diagnosticsName = null,
 		params KeyValuePair<string, object?>[] diagnosticsTags
 	) : this(new() {
 		Name = name,
 		Version = version,
 		LicensePublicKey = licensePublicKey,
+		RequiredEntitlements = requiredEntitlements,
 		DiagnosticsName = diagnosticsName,
 		DiagnosticsTags = diagnosticsTags
 	}) { }
