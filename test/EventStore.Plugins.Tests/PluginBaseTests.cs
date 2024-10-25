@@ -80,7 +80,6 @@ public class PluginBaseTests {
 		var licenseService = new FakeLicenseService(createLicense: false);
 
 		IPlugableComponent plugin = new NightCityPlugin(new() {
-			LicensePublicKey = licenseService.PublicKey,
 			RequiredEntitlements = ["starlight"],
 		});
 
@@ -106,7 +105,6 @@ public class PluginBaseTests {
 		var licenseService = new FakeLicenseService(createLicense: true);
 
 		IPlugableComponent plugin = new NightCityPlugin(new() {
-			LicensePublicKey = licenseService.PublicKey,
 			RequiredEntitlements = ["starlight"],
 		});
 
@@ -132,11 +130,7 @@ public class PluginBaseTests {
 		var licenseService = new FakeLicenseService(createLicense: true);
 
 		Exception? licenseException = null;
-		IPlugableComponent plugin = new NightCityPlugin(new() {
-			LicensePublicKey = licenseService.PublicKey,
-			RequiredEntitlements = ["starlight"],
-			OnLicenseException = ex => licenseException = ex,
-		});
+		IPlugableComponent plugin = new CustomCityPlugin(ex => licenseException = ex);
 
 		var builder = WebApplication.CreateBuilder();
 
@@ -161,7 +155,6 @@ public class PluginBaseTests {
 		var licenseService = new FakeLicenseService(createLicense: true, "starlight");
 
 		IPlugableComponent plugin = new NightCityPlugin(new() {
-			LicensePublicKey = licenseService.PublicKey,
 			RequiredEntitlements = ["starlight"],
 		});
 
@@ -234,15 +227,10 @@ public class PluginBaseTests {
 			bool createLicense,
 			params string[] entitlements) {
 
-			using var rsa = RSA.Create(1024);
-
-			PublicKey = ToBase64String(rsa.ExportRSAPublicKey());
-			var privateKey = ToBase64String(rsa.ExportRSAPrivateKey());
-
-			SelfLicense = License.Create(PublicKey, privateKey);
+			SelfLicense = License.Create([]);
 
 			if (createLicense) {
-				CurrentLicense = License.Create(PublicKey, privateKey, entitlements.ToDictionary(
+				CurrentLicense = License.Create(entitlements.ToDictionary(
 					x => x,
 					x => (object)"true"));
 				Licenses = new BehaviorSubject<License>(CurrentLicense);
@@ -254,7 +242,6 @@ public class PluginBaseTests {
 			}
 		}
 
-		public string PublicKey { get; }
 		public License SelfLicense { get; }
 
 		public License? CurrentLicense { get; }
@@ -290,6 +277,19 @@ public class PluginBaseTests {
 
 		public override void ConfigureApplication(IApplicationBuilder app, IConfiguration configuration) =>
 			OnConfigureApplication?.Invoke(this);
+	}
+
+	class CustomCityPlugin : NightCityPlugin {
+		private readonly Action<Exception> _onLicenseException;
+
+		public CustomCityPlugin(Action<Exception> onLicenseException) : base(new() {
+			RequiredEntitlements = ["starlight"]
+		}) {
+			_onLicenseException = onLicenseException;
+		}
+		protected override void OnLicenseException(Exception ex, Action<Exception> shutdown) {
+			_onLicenseException(ex);
+		}
 	}
 
 	class PhantomLibertySubsystemsPlugin : SubsystemsPlugin {

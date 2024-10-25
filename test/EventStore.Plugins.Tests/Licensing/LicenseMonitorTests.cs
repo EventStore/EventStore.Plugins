@@ -22,7 +22,6 @@ public class LicenseMonitorTests {
 			licenseService: licenseService,
 			onLicenseException: ex => licenseException = ex,
 			logger: new FakeLogger(),
-			licensePublicKey: licenseService.PublicKey,
 			onCriticalError: _ => criticalError = true);
 
 		licenseException.Should().BeNull();
@@ -44,7 +43,6 @@ public class LicenseMonitorTests {
 			licenseService: licenseService,
 			onLicenseException: ex => licenseException = ex,
 			logger: new FakeLogger(),
-			licensePublicKey: licenseService.PublicKey,
 			onCriticalError: _ => criticalError = true);
 
 		licenseException.Should().BeNull();
@@ -66,7 +64,6 @@ public class LicenseMonitorTests {
 			licenseService: licenseService,
 			onLicenseException: ex => licenseException = ex,
 			logger: new FakeLogger(),
-			licensePublicKey: licenseService.PublicKey,
 			onCriticalError: _ => criticalError = true);
 
 		licenseException.Should().BeOfType<LicenseEntitlementException>()
@@ -88,7 +85,6 @@ public class LicenseMonitorTests {
 			licenseService: licenseService,
 			onLicenseException: ex => licenseException = ex,
 			logger: new FakeLogger(),
-			licensePublicKey: licenseService.PublicKey,
 			onCriticalError: _ => criticalError = true);
 
 		licenseException.Should().BeOfType<LicenseException>();

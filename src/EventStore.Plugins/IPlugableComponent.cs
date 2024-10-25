@@ -39,7 +39,7 @@ public interface IPlugableComponent {
 	/// <summary>
 	///		The public key used for licensing.
 	/// </summary>
-	string? LicensePublicKey { get; }
+	string LicensePublicKey { get; }
 	
 	/// <summary>
 	///     Configures the services using the provided IServiceCollection and IConfiguration.
