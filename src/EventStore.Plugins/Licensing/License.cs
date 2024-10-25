@@ -12,12 +12,12 @@ namespace EventStore.Plugins.Licensing;
 public record License(JsonWebToken Token) {
 	public string? CurrentCultureIgnoreCase { get; private set; }
 
-	public async Task<bool> ValidateAsync(string publicKey) {
-		var result = await ValidateTokenAsync(publicKey, Token.EncodedToken);
+	public async Task<bool> ValidateAsync(string? publicKey = null) {
+		var result = await ValidateTokenAsync(publicKey ?? LicenseConstants.LicensePublicKey, Token.EncodedToken);
 		return result.IsValid;
 	}
 
-	public async Task<bool> TryValidateAsync(string publicKey) {
+	public async Task<bool> TryValidateAsync(string? publicKey = null) {
 		try {
 			return await ValidateAsync(publicKey);
 		} catch {
@@ -47,9 +47,13 @@ public record License(JsonWebToken Token) {
 	}
 
 	public static async Task<License> CreateAsync(
-		string publicKey,
-		string privateKey,
-		IDictionary<string, object> claims) {
+		Dictionary<string, object> claims,
+		string? publicKey = null,
+		string? privateKey = null) {
+
+		publicKey ??= LicenseConstants.LicensePublicKey;
+		privateKey ??= LicenseConstants.LicensePrivateKey;
+
 		using var rsa = RSA.Create();
 		rsa.ImportRSAPrivateKey(FromBase64String(privateKey), out _);
 		var tokenHandler = new JsonWebTokenHandler();
@@ -72,11 +76,8 @@ public record License(JsonWebToken Token) {
 		return new(jwt);
 	}
 
-	public static License Create(string publicKey, string privateKey, IDictionary<string, object>? claims = null) =>
-		CreateAsync(publicKey, privateKey, claims ?? new Dictionary<string, object>()).GetAwaiter().GetResult();
-
-	public static License Create(byte[] publicKey, byte[] privateKey, IDictionary<string, object>? claims = null) =>
-		CreateAsync(ToBase64String(publicKey), ToBase64String(privateKey), claims ?? new Dictionary<string, object>()).GetAwaiter().GetResult();
+	public static License Create(Dictionary<string, object> claims) =>
+		CreateAsync(claims).GetAwaiter().GetResult();
 
 	static async Task<TokenValidationResult> ValidateTokenAsync(string publicKey, string token) {
 		// not very satisfactory https://github.com/dotnet/runtime/issues/43087

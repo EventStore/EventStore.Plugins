@@ -25,7 +25,6 @@ public abstract class SubsystemsPlugin : Plugin, ISubsystem, ISubsystemsPlugin {
 		string? name = null, string? version = null,
 		string? licensePublicKey = null,
 		string[]? requiredEntitlements = null,
-		Action<Exception>? onLicenseException = null,
 		string? commandLineName = null,
 		string? diagnosticsName = null,
 		params KeyValuePair<string, object?>[] diagnosticsTags
@@ -34,7 +33,6 @@ public abstract class SubsystemsPlugin : Plugin, ISubsystem, ISubsystemsPlugin {
 		Version = version,
 		LicensePublicKey = licensePublicKey,
 		RequiredEntitlements = requiredEntitlements,
-		OnLicenseException = onLicenseException,
 		DiagnosticsName = diagnosticsName,
 		DiagnosticsTags = diagnosticsTags,
 		CommandLineName = commandLineName

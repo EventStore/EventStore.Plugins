@@ -18,7 +18,6 @@ public record PluginOptions {
 	public string? Version { get; init; }
 	public string? LicensePublicKey { get; init; }
 	public string[]? RequiredEntitlements { get; init; }
-	public Action<Exception>? OnLicenseException { get; init; }
 	public string? DiagnosticsName { get; init; }
 	public KeyValuePair<string, object?>[] DiagnosticsTags { get; init; } = [];
 }
@@ -30,7 +29,6 @@ public abstract class Plugin : IPlugableComponent, IDisposable {
 		string? version = null,
 		string? licensePublicKey = null,
 		string[]? requiredEntitlements = null,
-		Action<Exception>? onLicenseException = null,
 		string? diagnosticsName = null,
 		params KeyValuePair<string, object?>[] diagnosticsTags) {
 
@@ -45,9 +43,8 @@ public abstract class Plugin : IPlugableComponent, IDisposable {
 
 		Version = GetPluginVersion(version, pluginType);
 
-		LicensePublicKey = licensePublicKey;
+		LicensePublicKey = licensePublicKey ?? LicenseConstants.LicensePublicKey;
 		RequiredEntitlements = requiredEntitlements;
-		OnLicenseException = onLicenseException;
 
 		DiagnosticsName = diagnosticsName ?? Name;
 		DiagnosticsTags = diagnosticsTags;
@@ -76,15 +73,12 @@ public abstract class Plugin : IPlugableComponent, IDisposable {
 		options.Version,
 		options.LicensePublicKey,
 		options.RequiredEntitlements,
-		options.OnLicenseException,
 		options.DiagnosticsName,
 		options.DiagnosticsTags) { }
 
-	public string? LicensePublicKey { get; }
+	public string LicensePublicKey { get; }
 
 	public string[]? RequiredEntitlements { get; }
-
-	Action<Exception>? OnLicenseException { get; }
 
 	DiagnosticListener DiagnosticListener { get; }
 
@@ -110,6 +104,10 @@ public abstract class Plugin : IPlugableComponent, IDisposable {
 	public virtual void ConfigureServices(IServiceCollection services, IConfiguration configuration) { }
 
 	public virtual void ConfigureApplication(IApplicationBuilder app, IConfiguration configuration) { }
+
+	protected virtual void OnLicenseException(Exception ex, Action<Exception> shutdown) {
+		shutdown(ex);
+	}
 
 	/// <summary>
 	///		This check will happen before the plugin is configured and returns true by default.<br/>
@@ -143,15 +141,15 @@ public abstract class Plugin : IPlugableComponent, IDisposable {
 			return;
 		}
 
-		if (Enabled && LicensePublicKey is not null) {
+		if (Enabled && RequiredEntitlements is not null) {
 			// the plugin is enabled and requires a license
 			var licenseService = app.ApplicationServices.GetRequiredService<ILicenseService>();
 
 			_ = LicenseMonitor.MonitorAsync(
 				Name,
-				RequiredEntitlements ?? [],
+				RequiredEntitlements,
 				licenseService,
-				OnLicenseException ?? licenseService.RejectLicense,
+				ex => OnLicenseException(ex, licenseService.RejectLicense),
 				logger,
 				LicensePublicKey);
 		}

@@ -14,9 +14,10 @@ public static class LicenseMonitor {
 		ILicenseService licenseService,
 		Action<Exception> onLicenseException,
 		ILogger logger,
-		string licensePublicKey = LicenseConstants.LicensePublicKey,
+		string? licensePublicKey = null,
 		Action<int>? onCriticalError = null) {
 
+		licensePublicKey ??= LicenseConstants.LicensePublicKey;
 		onCriticalError ??= Environment.Exit;
 
 		// authenticate the license service itself so that we can trust it to

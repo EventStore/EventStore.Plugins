@@ -11,7 +11,6 @@ public abstract class AuthorizationProviderBase(PluginOptions options) : Plugin(
 		string? version = null,
 		string? licensePublicKey = null,
 		string[]? requiredEntitlements = null,
-		Action<Exception>? onLicenseException = null,
 		string? diagnosticsName = null,
 		params KeyValuePair<string, object?>[] diagnosticsTags
 	) : this(new() {
@@ -19,7 +18,6 @@ public abstract class AuthorizationProviderBase(PluginOptions options) : Plugin(
 		Version = version,
 		LicensePublicKey = licensePublicKey,
 		RequiredEntitlements = requiredEntitlements,
-		OnLicenseException = onLicenseException,
 		DiagnosticsName = diagnosticsName,
 		DiagnosticsTags = diagnosticsTags
 	}) { }
