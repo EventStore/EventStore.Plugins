@@ -14,7 +14,11 @@ public class ChunkDataReadStream(Stream chunkFileStream) : Stream {
 	public sealed override bool CanWrite => false;
 	public sealed override int Read(byte[] buffer, int offset, int count) => throw new InvalidOperationException("use ReadAsync");
 	public sealed override void Write(byte[] buffer, int offset, int count) => throw new InvalidOperationException();
+	public override ValueTask WriteAsync(ReadOnlyMemory<byte> buffer, CancellationToken cancellationToken = default) =>
+		throw new InvalidOperationException();
 	public sealed override void Flush() => throw new InvalidOperationException();
+	public sealed override Task FlushAsync(CancellationToken cancellationToken) =>
+		throw new InvalidOperationException();
 	public sealed override void SetLength(long value) => throw new InvalidOperationException();
 	public override long Length => throw new NotSupportedException();
 
