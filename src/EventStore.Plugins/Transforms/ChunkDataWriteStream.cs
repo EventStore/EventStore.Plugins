@@ -11,6 +11,8 @@ namespace EventStore.Plugins.Transforms;
 public class ChunkDataWriteStream(Stream chunkFileStream, IncrementalHash checksumAlgorithm) : ChunkDataStream(chunkFileStream) {
 	private long? _positionToHash;
 
+	public IncrementalHash ChecksumAlgorithm => checksumAlgorithm;
+
 	public sealed override bool CanRead => false;
 	public sealed override bool CanSeek => false;
 	public sealed override bool CanWrite => true;
