@@ -8,7 +8,7 @@ public interface IChunkTransformFactory {
 
 	int TransformDataPosition(int dataPosition);
 
-	int CreateTransformHeader(Span<byte> transformHeader);
+	void CreateTransformHeader(Span<byte> transformHeader);
 
 	ValueTask ReadTransformHeader(Stream stream, Memory<byte> transformHeader, CancellationToken token = default);
 
