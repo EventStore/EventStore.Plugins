@@ -6,7 +6,7 @@ using System.Runtime.CompilerServices;
 namespace EventStore.Plugins.Transforms;
 
 public abstract class ChunkDataStream(Stream chunkFileStream) : Stream {
-	protected Stream ChunkFileStream => chunkFileStream;
+	public Stream ChunkFileStream => chunkFileStream;
 
 	public override int Read(Span<byte> buffer) => chunkFileStream.Read(buffer);
 
