@@ -1,15 +1,18 @@
 // Copyright (c) Event Store Ltd and/or licensed to Event Store Ltd under one or more agreements.
 // Event Store Ltd licenses this file to you under the Event Store License v2 (see LICENSE.md).
 
-using System;
-using System.IO;
-
 namespace EventStore.Plugins.Transforms;
 
 public interface IChunkTransformFactory {
 	TransformType Type { get; }
+
 	int TransformDataPosition(int dataPosition);
-	ReadOnlyMemory<byte> CreateTransformHeader();
-	ReadOnlyMemory<byte> ReadTransformHeader(Stream stream);
-	IChunkTransform CreateTransform(ReadOnlyMemory<byte> transformHeader);
+
+	void CreateTransformHeader(Span<byte> transformHeader);
+
+	ValueTask ReadTransformHeader(Stream stream, Memory<byte> transformHeader, CancellationToken token = default);
+
+	IChunkTransform CreateTransform(ReadOnlySpan<byte> transformHeader);
+
+	int TransformHeaderLength { get; }
 }

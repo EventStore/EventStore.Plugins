@@ -1,12 +1,10 @@
 // Copyright (c) Event Store Ltd and/or licensed to Event Store Ltd under one or more agreements.
 // Event Store Ltd licenses this file to you under the Event Store License v2 (see LICENSE.md).
 
-using System;
-
 namespace EventStore.Plugins.Transforms;
 
 public interface IChunkWriteTransform {
 	ChunkDataWriteStream TransformData(ChunkDataWriteStream stream);
-	void CompleteData(int footerSize, int alignmentSize);
-	void WriteFooter(ReadOnlySpan<byte> footer, out int fileSize);
+	ValueTask CompleteData(int footerSize, int alignmentSize, CancellationToken token = default);
+	ValueTask<int> WriteFooter(ReadOnlyMemory<byte> footer, CancellationToken token = default);
 }
