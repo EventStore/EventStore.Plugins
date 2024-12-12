@@ -19,7 +19,10 @@ public class ChunkDataWriteStream(Stream chunkFileStream, IncrementalHash checks
 
 	public sealed override int Read(Span<byte> buffer) => throw new NotSupportedException();
 
-	public override void Write(ReadOnlySpan<byte> buffer) => ChunkFileStream.Write(buffer);
+	public override void Write(ReadOnlySpan<byte> buffer) {
+		ChunkFileStream.Write(buffer);
+		checksumAlgorithm.AppendData(buffer);
+	}
 
 	public override void Flush() => ChunkFileStream.Flush();
 
