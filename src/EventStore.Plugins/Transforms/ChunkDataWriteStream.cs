@@ -20,6 +20,13 @@ public class ChunkDataWriteStream(Stream chunkFileStream, IncrementalHash checks
 	public sealed override int Read(Span<byte> buffer) => throw new NotSupportedException();
 
 	public override void Write(ReadOnlySpan<byte> buffer) {
+		if (_positionToHash is { } count) {
+			ReadAndChecksum(count);
+
+			Debug.Assert(ChunkFileStream.Position == count);
+			_positionToHash = null;
+		}
+
 		ChunkFileStream.Write(buffer);
 		checksumAlgorithm.AppendData(buffer);
 	}
@@ -74,6 +81,18 @@ public class ChunkDataWriteStream(Stream chunkFileStream, IncrementalHash checks
 			}
 		} finally {
 			ArrayPool<byte>.Shared.Return(buffer);
+		}
+	}
+
+	private void ReadAndChecksum(long count) {
+		Span<byte> buffer = stackalloc byte[1024];
+
+		for (int bytesRead; count > 0L; count -= bytesRead) {
+			bytesRead = ChunkFileStream.Read(buffer.Slice(0, (int)long.Min(count, buffer.Length)));
+			if (bytesRead is 0)
+				break;
+
+			checksumAlgorithm.AppendData(buffer.Slice(0, bytesRead));
 		}
 	}
 }
