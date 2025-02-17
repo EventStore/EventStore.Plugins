@@ -3,6 +3,7 @@
 
 using System.Security.Cryptography;
 using EventStore.Plugins.Licensing;
+using License = EventStore.Plugins.Licensing.License;
 
 namespace EventStore.Plugins.Tests.Licensing;
 

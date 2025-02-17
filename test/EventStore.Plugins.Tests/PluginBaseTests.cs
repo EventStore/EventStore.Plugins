@@ -11,6 +11,7 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using static System.Convert;
+using License = EventStore.Plugins.Licensing.License;
 
 namespace EventStore.Plugins.Tests;
 
